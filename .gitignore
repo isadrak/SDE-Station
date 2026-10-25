@@ -9,6 +9,7 @@ firmware/src/web/assets.h
 *.bin
 *.elf
 *.apk
+!android/sde.apk
 
 # Android : sorties de build.sh et clés de signature
 android/build/
@@ -20,3 +21,7 @@ android/assets/page.html
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Sorties de firmware/build.sh
+firmware/build/
+firmware/dist/

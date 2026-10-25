@@ -114,7 +114,7 @@ Le boîtier mural (dossier [`boitier/`](boitier/)) sépare l'électronique en ha
 ## Organisation du dépôt
 
 ```
-firmware/   Firmware ESP32 (PlatformIO, C++)
+firmware/   Firmware ESP32 (C++, arduino-esp32 / ESP-IDF, build.sh)
   src/hal/    Pilotes : MH-Z19B, SDS011, BME680, bande LED (RMT)
   src/app/    Logique : moyenne mobile, cycle du SDS011, couleur de la note
   src/net/    Wi-Fi, serveur HTTP, historique LittleFS, MQTT/TLS, journal, heure
@@ -137,16 +137,14 @@ Les mises à jour suivantes se font par Wi-Fi depuis l'appli, avec le fichier `-
 
 ### Compiler le firmware
 
-Prérequis : [PlatformIO](https://platformio.org/) et Node.js.
+Prérequis : [arduino-cli](https://arduino.github.io/arduino-cli/), Node.js et esptool (`pip install esptool`).
 
 ```bash
-cd firmware
-pio run                 # compile (régénère d'abord src/web/assets.h depuis app/)
-pio run -t upload       # flashe par USB
-pio device monitor      # sortie JSON, une ligne par mesure, 115200 bauds
+firmware/build.sh --setup   # 1re fois : installe le cœur ESP32 2.0.17 et les bibliothèques
+firmware/build.sh           # compile et produit firmware/dist/*-ota.bin et *-merged.bin
 ```
 
-La compilation est vérifiée à chaque push par GitHub Actions, et chaque tag `v*` publie les binaires dans une Release.
+Le script intègre d'abord l'application (`app/`) dans le firmware sous forme compressée. La version est dans `firmware/VERSION`. GitHub Actions compile à chaque push, et chaque tag `v*` publie les binaires dans une Release.
 
 ### Essayer l'application sans matériel
 
