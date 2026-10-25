@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write
 
+env:
+  ESP32_CORE: "2.0.17"
+  FQBN: esp32:esp32:esp32
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,42 +30,51 @@ jobs:
         with:
           node-version: "22"
 
+      - uses: arduino/setup-arduino-cli@v2
+
       - uses: actions/cache@v5
         with:
-          path: ~/.platformio
-          key: pio-${{ hashFiles('firmware/platformio.ini') }}
+          path: ~/.arduino15
+          key: arduino-esp32-${{ env.ESP32_CORE }}-v1
 
-      - name: Installer PlatformIO et esptool
-        run: pip install platformio esptool==4.8.1
+      - name: Installer le cœur ESP32 et les bibliothèques
+        run: |
+          pip install pyserial esptool==4.8.1
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@$ESP32_CORE --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli lib install "Adafruit BME680 Library" "Adafruit Unified Sensor" "Adafruit BusIO" ArduinoJson@7.2.1 "Adafruit NeoPixel@1.12.3"
 
       - name: Compiler
         run: |
           set -o pipefail
-          pio run -d firmware 2>&1 | tee build.log || {
-            # Erreurs visibles dans le résumé du workflow (annotations)
-            grep -E "error|Error|overflow|region .* overflowed" build.log | head -n 20 | while read -r l; do echo "::error::$l"; done
+          VER=$(sed -n 's/.*SDE_FW_VERSION=\\"\([^\\]*\)\\".*/\1/p' firmware/platformio.ini)
+          echo "VER=$VER" >> $GITHUB_ENV
+          node firmware/tools/gen_assets.js
+          # Croquis Arduino : un .ino vide + le dossier src/ du firmware
+          mkdir -p sketch/sde && touch sketch/sde/sde.ino && cp -r firmware/src sketch/sde/src
+          arduino-cli compile --fqbn $FQBN --output-dir out \
+            --build-property "compiler.cpp.extra_flags=-DSDE_FW_VERSION=\"$VER\"" \
+            sketch/sde 2>&1 | tee build.log || {
+            grep -E "error|Error|overflow" build.log | head -n 20 | while read -r l; do echo "::error::$l"; done
             echo "::error::$(tail -n 5 build.log | tr '\n' ' ')"
-            echo "::error::$(grep -E 'Dependency Graph|\|--|PLATFORM:|PACKAGES:' -A0 build.log | tr '\n' ' ' | cut -c1-1500)"
             exit 1
           }
+          grep -E "Sketch uses|Global variables" build.log | while read -r l; do echo "::notice::$l"; done
 
       - name: Préparer les binaires (OTA + image complète pour 0x0)
         run: |
-          VER=$(sed -n 's/.*SDE_FW_VERSION=\\"\([^\\]*\)\\".*/\1/p' firmware/platformio.ini)
-          B=firmware/.pio/build/esp32dev
           mkdir -p dist
-          cp $B/firmware.bin dist/sde-firmware-$VER-ota.bin
+          cp out/sde.ino.bin dist/sde-firmware-$VER-ota.bin
           python -m esptool --chip esp32 merge_bin -o dist/sde-firmware-$VER-merged.bin \
             --flash_mode keep --flash_freq keep --flash_size keep \
-            0x1000 $B/bootloader.bin 0x8000 $B/partitions.bin \
-            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
-            0x10000 $B/firmware.bin
+            0x1000 out/sde.ino.bootloader.bin 0x8000 out/sde.ino.partitions.bin \
+            0xe000 ~/.arduino15/packages/esp32/hardware/esp32/$ESP32_CORE/tools/partitions/boot_app0.bin \
+            0x10000 out/sde.ino.bin
           ls -l dist
-          pio run -d firmware -t size | tail -n 4
 
       - uses: actions/upload-artifact@v4
         with:
-          name: sde-firmware
+          name: sde-firmware-${{ env.VER }}
           path: dist/*.bin
 
       - name: Publier la Release
