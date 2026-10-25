@@ -123,6 +123,18 @@ Les réglages sont dans `firmware/src/config.h` : `PIN_LED`, `LED_COUNT`, `LED_B
 
 **Impression :** PETG (ou ABS), buse 0,4, couches de 0,2 mm, 4 périmètres, 20 % de remplissage. Aucune pièce n'a besoin de supports : le corps s'imprime dos sur le plateau, le capot face avant sur le plateau (la languette de la buse pointe vers le haut, elle est fine : imprime-la doucement), le socle côté boîtier sur le plateau, la plaque à plat, le pied base sur le plateau.
 
+**Vérifié avant impression (2026-10-25)** : chaque pièce a été découpée dans PrusaSlicer avec ces réglages. Aucune ne demande de supports. Les pièces ne se touchent pas entre elles une fois montées, et le SDS011 (même avec les 23 mm de la fiche technique), la carte, le BME680 et le capot ont tous leur place. Seul avertissement du slicer : le logo « SDE » gravé sur la face du capot, qui est posée sur le plateau. Ce sont de petits ponts de 2 mm, sans risque en pratique.
+
+| Pièce | Temps estimé | Filament (PETG) |
+|---|---|---|
+| Corps | 9 h | 82 g |
+| Capot | 3 h 20 | 32 g |
+| Socle | 4 h 40 | 57 g |
+| Support mural | 1 h 10 | 14 g |
+| Pied de table | 4 h 15 | 56 g |
+
+Les temps viennent du profil générique de PrusaSlicer. Une imprimante récente (Bambu, Prusa MK4) ira 2 à 3 fois plus vite. La plus grande pièce fait 104 × 148 mm : elle passe sur un plateau de 180 × 180 mm.
+
 **Visserie :**
 - 10 inserts laiton M3 (trou de 4,0 mm, 5,7 mm de long) : 6 pour le capot, 4 dans le socle ;
 - 6 vis M3 × 8 à tête fraisée (capot), 4 vis M3 × 8 à tête fraisée (socle, vissées de l'intérieur du corps) ;
