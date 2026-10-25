@@ -9,7 +9,7 @@ Ce guide accompagne le [README](../README.md). Les fichiers binaires (firmware `
 | `firmware/` | Firmware de l'ESP32-DevKitC-32E (MH-Z19B, SDS011, BME680, Wi-Fi) |
 | `sde-firmware-X.Y.Z-merged.bin` (Releases) | Firmware complet, pour le flash par USB à l'adresse `0x0` |
 | `sde-firmware-X.Y.Z-ota.bin` (Releases) | Le même firmware, pour la mise à jour par Wi-Fi |
-| `boitier/` | Boîtier mural imprimable en 3D, socle avec bande LED et support coulissant (voir `boitier/LISEZMOI.md`) |
+| `boitier/` | Boîtier imprimable en 3D, socle avec bande LED, support mural coulissant et pied de table (voir `boitier/LISEZMOI.md`) |
 | `app/` | Application d'analyse (`sde-analyse.html`), son manifeste, son service worker et ses icônes. Tout est intégré dans le firmware : la station sert elle-même l'application |
 | `android/` | Appli Android : `sde.apk` (aussi dans les Releases) et sa source (coquille qui charge la page de la station, section 3 bis) |
 
