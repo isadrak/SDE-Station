@@ -136,13 +136,12 @@ Les réglages sont dans `firmware/src/config.h` : `PIN_LED`, `LED_COUNT`, `LED_B
 Les temps viennent du profil générique de PrusaSlicer. Une imprimante récente (Bambu, Prusa MK4) ira 2 à 3 fois plus vite. La plus grande pièce fait 104 × 148 mm : elle passe sur un plateau de 180 × 180 mm.
 
 **Visserie :**
-- 10 inserts laiton M3 (trou de 4,0 mm, 5,7 mm de long) : 6 pour le capot, 4 dans le socle ;
-- 6 vis M3 × 8 à tête fraisée (capot), 4 vis M3 × 8 à tête fraisée (socle, vissées de l'intérieur du corps) ;
+- 6 vis M3 × 8 à tête fraisée (capot) et 4 vis M3 × 8 à tête fraisée (socle, vissées de l'intérieur du corps). Elles se vissent directement dans le plastique, dans des trous de 2,5 mm : la première fois, visse doucement pour qu'elles taillent leur filet, puis ne serre pas trop fort. Si le filet finit par s'user à force d'ouvrir le boîtier, mets `inserts = true` en haut du fichier pour passer à des inserts en laiton (trous de 4 mm) ;
 - 4 vis M2 × 6 autotaraudeuses pour la carte (trous de 2,2 mm) ;
 - 2 vis M2,5 × 10 autotaraudeuses pour le SDS011 et 2 vis M2,5 × 6 pour le BME680 (trous de 3 mm sur les modules, avant-trous de 2,2 mm dans les plots) ;
 - pour le mur : 2 vis 4 × 30 à tête fraisée et 2 chevilles adaptées au mur (section 3) ;
 - pour la table : 4 patins adhésifs.
 
-**Ordre de montage :** poser les inserts au fer à souder, coller la bande sur le socle, visser le socle au corps (le fil de la bande passe par le trou du dos), visser le SDS011 (buse dans l'encoche), le BME680 et la carte, passer les câbles dans les fentes de la cloison et les boucher avec de la mousse, coller l'antenne, fermer le capot. Glisser le boîtier sur la plaque murale ou sur le pied.
+**Ordre de montage :** coller la bande sur le socle, visser le socle au corps (le fil de la bande passe par le trou du dos), visser le SDS011 (buse dans l'encoche), le BME680 et la carte, passer les câbles dans les fentes de la cloison et les boucher avec de la mousse, coller l'antenne, fermer le capot. Glisser le boîtier sur la plaque murale ou sur le pied.
 
 **Modifier et réexporter :** ouvre `sde-boitier.scad` dans OpenSCAD (gratuit), change les valeurs en haut du fichier, choisis la pièce avec la variable `piece` (ou dans le panneau Customizer), puis **F6** et **Exporter en STL**. La valeur `interieur` affiche le boîtier avec les pièces en place, et `sur_table` le montre sur son pied.
