@@ -1,0 +1,63 @@
+name: Firmware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths: ["firmware/**", "app/**", ".github/workflows/firmware.yml"]
+  pull_request:
+    paths: ["firmware/**", "app/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ hashFiles('firmware/platformio.ini') }}
+
+      - name: Installer PlatformIO et esptool
+        run: pip install platformio esptool==4.8.1
+
+      - name: Compiler
+        run: pio run -d firmware
+
+      - name: Préparer les binaires (OTA + image complète pour 0x0)
+        run: |
+          VER=$(sed -n 's/.*SDE_FW_VERSION=\\"\([^\\]*\)\\".*/\1/p' firmware/platformio.ini)
+          B=firmware/.pio/build/esp32dev
+          mkdir -p dist
+          cp $B/firmware.bin dist/sde-firmware-$VER-ota.bin
+          python -m esptool --chip esp32 merge_bin -o dist/sde-firmware-$VER-merged.bin \
+            --flash_mode keep --flash_freq keep --flash_size keep \
+            0x1000 $B/bootloader.bin 0x8000 $B/partitions.bin \
+            0xe000 ~/.platformio/packages/framework-arduinoespressif32/tools/partitions/boot_app0.bin \
+            0x10000 $B/firmware.bin
+          ls -l dist
+          pio run -d firmware -t size | tail -n 4
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sde-firmware
+          path: dist/*.bin
+
+      - name: Publier la Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.bin
