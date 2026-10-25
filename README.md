@@ -121,8 +121,12 @@ Leçons de la V1, à corriger en V2 : le GND du MH-Z19B n'était pas routé (fil
 Le boîtier (dossier [`boitier/`](boitier/)) sépare l'électronique en haut et le flux d'air du SDS011 en bas : le capteur aspire dans une chambre d'air frais où se trouve aussi le BME680, à l'écart de la chaleur de l'ESP32, et rejette l'air de l'autre côté. Il se glisse sur un rail en queue d'aronde, fixé au mur ou porté par un pied de table.
 
 <p align="center">
-  <img src="boitier/apercu/vue-table.png" width="300" alt="Boîtier sur son pied">
-  <img src="boitier/apercu/vue-interieur.png" width="300" alt="Boîtier, intérieur">
+  <img src="boitier/apercu/vue-avant.png" width="260" alt="Boîtier, vue avant">
+  <img src="boitier/apercu/vue-interieur.png" width="260" alt="Boîtier, intérieur avec les capteurs">
+  <img src="boitier/apercu/vue-table.png" width="260" alt="Boîtier sur son pied de table">
+</p>
+<p align="center">
+  <img src="boitier/apercu/vue-eclatee.png" width="520" alt="Vue éclatée : plaque murale, socle lumineux, corps, capot">
 </p>
 
 ## Organisation du dépôt
@@ -135,7 +139,7 @@ firmware/   Firmware ESP32 (C++, arduino-esp32 / ESP-IDF, build.sh)
   tools/      Intégration de l'appli dans le firmware (gzip -> assets.h)
 app/        Application web (PWA) servie par la station et par GitHub Pages
 android/    Appli Android (WebView native, build sans Android Studio)
-boitier/    Boîtier OpenSCAD paramétrique, STL et aperçus
+boitier/    Boîtier OpenSCAD paramétrique (mur ou table), STL et aperçus
 docs/       Guide d'utilisation complet et captures
 ```
 

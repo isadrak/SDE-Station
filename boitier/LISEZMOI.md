@@ -24,6 +24,8 @@ Encombrement : 104 × 148 mm de face, 31,5 mm d'épaisseur pour le boîtier avec
 
 ## 2. Comment le boîtier est organisé
 
+![Vue éclatée : plaque murale, socle et bande LED, corps avec les pièces en place, capot](apercu/vue-eclatee.png)
+
 ![Vue intérieure](apercu/vue-interieur.png)
 
 - **En haut, le compartiment électronique.** La carte est vissée sur 4 plots de 4 mm (vis M2 autotaraudeuses) contre le dos, son bord haut à 0,5 mm de la paroi. La fiche micro-USB passe par un trou de 13 × 9 mm dans la paroi du haut : comme le connecteur est 3,8 mm en retrait, la fiche s'enfonce d'environ 6 mm dans le trou. Un câble au bout moulé fin (moins de 11 × 7 mm) entre sans forcer. Des fentes sur les deux côtés et en haut du capot laissent sortir l'air chaud de l'ESP32.
@@ -48,6 +50,8 @@ Encombrement : 104 × 148 mm de face, 31,5 mm d'épaisseur pour le boîtier avec
 - **ça sonne creux** : c'est du gypse (placoplâtre). Prends 2 chevilles à gypse en plastique ou des chevilles métalliques à expansion (type Molly) pour vis de 4 mm. Si tu tombes sur un montant en bois (ça sonne plein à cet endroit), visse directement dedans avec des vis à bois 4 × 30 ;
 - **ça sonne plein et c'est dur** : béton ou brique. Perce au foret à béton de 6 mm et mets des chevilles en nylon de 6 mm avec des vis 4 × 30 ;
 - dans le doute, des chevilles universelles de 6 mm tiennent dans les deux cas.
+
+![Vue avant](apercu/vue-avant.png)
 
 ![Support](apercu/vue-support.png)
 
