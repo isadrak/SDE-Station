@@ -104,6 +104,20 @@ Sujets MQTT sous `sde/<SDE-XXXX>/` : `status` (testament online/offline), `info`
 | Bande WS2812B (prévue en V2) | Lumière murale couleur de la note | IO18 via 330 Ω |
 | Carrier board maison (KiCad) | Connecteurs, découplage 220 µF / 100 nF, alim 5 V USB | — |
 
+### La carte électronique
+
+Carte porteuse deux couches dessinée sous KiCad : l'ESP32-DevKitC-32E sur connecteurs femelles, le MH-Z19B soudé sur la carte, des connecteurs JST pour le BME680 et le SDS011, un condensateur de 220 µF sur le 5 V et un découplage de 100 nF sur le 3,3 V.
+
+<p align="center">
+  <img src="docs/images/pcb-3d.png" width="520" alt="Carte porteuse, vue 3D KiCad">
+</p>
+
+| Schéma | Routage |
+|:---:|:---:|
+| <img src="docs/images/pcb-schema.png" width="420" alt="Schéma KiCad"> | <img src="docs/images/pcb-routage.png" width="420" alt="Routage du PCB"> |
+
+Leçons de la V1, à corriger en V2 : le GND du MH-Z19B n'était pas routé (fil volant ajouté sur la carte fabriquée), et R1/R2 se sont retrouvées en série sur SDA/SCL au lieu d'être des résistances de tirage (pontées, le module BME680 a déjà les siennes).
+
 Le boîtier mural (dossier [`boitier/`](boitier/)) sépare l'électronique en haut et le flux d'air du SDS011 en bas, isole le BME680 de la chaleur de l'ESP32 et se glisse sur un rail en queue d'aronde fixé au mur.
 
 <p align="center">
