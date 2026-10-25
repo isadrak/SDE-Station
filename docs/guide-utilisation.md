@@ -6,12 +6,12 @@ Ce guide accompagne le [README](../README.md). Les fichiers binaires (firmware `
 
 | Dossier | Rôle |
 |---|---|
-| `firmware/` | Projet PlatformIO pour l'ESP32-DevKitC-32E (MH-Z19B, SDS011, BME680, Wi-Fi) |
+| `firmware/` | Firmware de l'ESP32-DevKitC-32E (MH-Z19B, SDS011, BME680, Wi-Fi) |
 | `sde-firmware-X.Y.Z-merged.bin` (Releases) | Firmware complet, pour le flash par USB à l'adresse `0x0` |
 | `sde-firmware-X.Y.Z-ota.bin` (Releases) | Le même firmware, pour la mise à jour par Wi-Fi |
 | `boitier/` | Boîtier mural imprimable en 3D, socle avec bande LED et support coulissant (voir `boitier/LISEZMOI.md`) |
 | `app/` | Application d'analyse (`sde-analyse.html`), son manifeste, son service worker et ses icônes. Tout est intégré dans le firmware : la station sert elle-même l'application |
-| `android/` | Source de l'appli Android (coquille qui charge la page de la station, section 3 bis) ; `sde.apk` est dans les Releases |
+| `android/` | Appli Android : `sde.apk` (aussi dans les Releases) et sa source (coquille qui charge la page de la station, section 3 bis) |
 
 ## 1. Flasher l'ESP32 en USB (une fois, puis par Wi-Fi)
 
@@ -211,7 +211,7 @@ Exemple de ligne :
 
 ## Modifier l'application
 
-Le contenu du dossier `app/` est intégré au firmware sous forme compressée (`firmware/src/web/assets.h`, fichier généré, hors du dépôt). PlatformIO le régénère avant chaque compilation (`tools/pre_build.py`, Node.js requis). À la main :
+Le contenu du dossier `app/` est intégré au firmware sous forme compressée (`firmware/src/web/assets.h`, fichier généré, hors du dépôt). `firmware/build.sh` le régénère avant chaque compilation. À la main :
 ```
 cd firmware
 node tools/gen_assets.js
