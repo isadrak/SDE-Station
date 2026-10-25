@@ -29,6 +29,7 @@ FILES.forEach(([url, file, mime], i) => {
   table += `  {"${url}", "${mime}", ASSET_${i}, ${data.length}, ${gz}},\n`;
   console.log(url.padEnd(24), data.length);
 });
+fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, `#pragma once
 // Généré automatiquement par tools/gen_assets.js depuis le dossier app/ : ne pas éditer.
 #include <Arduino.h>
