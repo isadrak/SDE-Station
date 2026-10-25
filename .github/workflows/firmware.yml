@@ -16,15 +16,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: "22"
 
       - uses: actions/cache@v4
         with:
@@ -35,7 +35,14 @@ jobs:
         run: pip install platformio esptool==4.8.1
 
       - name: Compiler
-        run: pio run -d firmware
+        run: |
+          set -o pipefail
+          pio run -d firmware 2>&1 | tee build.log || {
+            # Erreurs visibles dans le résumé du workflow (annotations)
+            grep -E "error|Error|overflow|region .* overflowed" build.log | head -n 20 | while read -r l; do echo "::error::$l"; done
+            echo "::error::$(tail -n 5 build.log | tr '\n' ' ')"
+            exit 1
+          }
 
       - name: Préparer les binaires (OTA + image complète pour 0x0)
         run: |
