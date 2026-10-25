@@ -41,6 +41,7 @@ jobs:
             # Erreurs visibles dans le résumé du workflow (annotations)
             grep -E "error|Error|overflow|region .* overflowed" build.log | head -n 20 | while read -r l; do echo "::error::$l"; done
             echo "::error::$(tail -n 5 build.log | tr '\n' ' ')"
+            echo "::error::$(grep -E 'Dependency Graph|\|--|PLATFORM:|PACKAGES:' -A0 build.log | tr '\n' ' ' | cut -c1-1500)"
             exit 1
           }
 
