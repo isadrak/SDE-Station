@@ -106,7 +106,7 @@ Sujets MQTT sous `sde/<SDE-XXXX>/` : `status` (testament online/offline), `info`
 
 ### La carte électronique
 
-Carte porteuse deux couches dessinée sous KiCad : l'ESP32-DevKitC-32E sur connecteurs femelles, le MH-Z19B soudé sur la carte, des connecteurs JST pour le BME680 et le SDS011, un condensateur de 220 µF sur le 5 V et un découplage de 100 nF sur le 3,3 V.
+Carte porteuse dessinée sous KiCad, fabriquée et soudée : l'ESP32-DevKitC-32E et le MH-Z19B sur connecteurs femelles, des connecteurs JST pour le BME680 et le SDS011, un condensateur de 220 µF sur le 5 V et un découplage de 100 nF sur le 3,3 V.
 
 <p align="center">
   <img src="docs/images/pcb-3d.png" width="520" alt="Carte porteuse, vue 3D KiCad">
