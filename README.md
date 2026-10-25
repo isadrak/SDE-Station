@@ -31,7 +31,7 @@ Je l'ai conçu de bout en bout, du matériel à l'application :
 - **Firmware** embarqué en C++ (FreeRTOS, deux cœurs, watchdog, historique de 30 jours en flash, mises à jour OTA, journal qui survit aux plantages).
 - **Application** web progressive servie par la station elle-même, plus une appli Android native.
 - **Accès à distance** chiffré par MQTT sur TLS (EMQX Cloud), pour consulter la station depuis n'importe où.
-- **Boîtier mural** paramétrique sous OpenSCAD, avec un socle lumineux qui prend la couleur de la qualité de l'air.
+- **Boîtier** paramétrique sous OpenSCAD (mur ou table), avec un socle lumineux qui prend la couleur de la qualité de l'air.
 
 | Accueil sur téléphone | Mesures (thème sombre) | Vue ingénieur |
 |:---:|:---:|:---:|
@@ -118,10 +118,10 @@ Carte porteuse dessinée sous KiCad, fabriquée et soudée : l'ESP32-DevKitC-32E
 
 Leçons de la V1, à corriger en V2 : le GND du MH-Z19B n'était pas routé (fil volant ajouté sur la carte fabriquée), et R1/R2 se sont retrouvées en série sur SDA/SCL au lieu d'être des résistances de tirage (pontées, le module BME680 a déjà les siennes).
 
-Le boîtier mural (dossier [`boitier/`](boitier/)) sépare l'électronique en haut et le flux d'air du SDS011 en bas, isole le BME680 de la chaleur de l'ESP32 et se glisse sur un rail en queue d'aronde fixé au mur.
+Le boîtier (dossier [`boitier/`](boitier/)) sépare l'électronique en haut et le flux d'air du SDS011 en bas : le capteur aspire dans une chambre d'air frais où se trouve aussi le BME680, à l'écart de la chaleur de l'ESP32, et rejette l'air de l'autre côté. Il se glisse sur un rail en queue d'aronde, fixé au mur ou porté par un pied de table.
 
 <p align="center">
-  <img src="boitier/apercu/vue-avant.png" width="300" alt="Boîtier, vue avant">
+  <img src="boitier/apercu/vue-table.png" width="300" alt="Boîtier sur son pied">
   <img src="boitier/apercu/vue-interieur.png" width="300" alt="Boîtier, intérieur">
 </p>
 
