@@ -19,9 +19,8 @@ Encombrement : 104 × 148 mm de face, 31,5 mm d'épaisseur pour le boîtier avec
 ## 1. D'où viennent les cotes
 
 - **La carte** vient de l'export STEP de KiCad. Au mur elle est tournée de 180° par rapport au STEP : micro-USB en haut, MH-Z19B à gauche. Trous Ø 2,2 (vis M2) à (79,65 ; 50,05), (5 ; 50), (79,75 ; 3,5) et (5 ; 3,6) depuis le coin bas-gauche. Le DevKitC dépasse de 5,9 mm du bord bas de la carte (côté antenne) : le compartiment en tient compte.
-- **Tes mesures du 2026-10-25** : USB à 13 mm au-dessus de la carte et 3,8 mm en retrait du bord, point le plus haut à 19,5 mm, broches à 2 mm sous la carte ; SDS011 69,5 × 69,5 × 20 mm, buse Ø 5 sur la face droite (20 mm du haut, 5,5 mm de la base), sortie 22 × 8 mm sur la face gauche, 2 trous Ø 3 ; BME680 16 × 18 mm, 2 trous Ø 3 à 11 mm d'entraxe, fil de 52 mm.
+- **Tes mesures du 2026-10-25** : USB à 13 mm au-dessus de la carte et 3,8 mm en retrait du bord, point le plus haut à 19,5 mm, broches à 2 mm sous la carte ; SDS011 69,5 × 69,5 × 20 mm, buse Ø 5 sur la face droite (20 mm du haut, 5,5 mm de la base), sortie 22 × 8 mm sur la face gauche, 2 trous Ø 3 ; BME680 16 × 18 mm, 2 trous Ø 3 à 11 mm d'entraxe, centrés à 6 mm du bord côté puce (opposé au fil), fil de 52 mm.
 - **La fiche technique du SDS011** donne 71 × 70 × 23 mm, buse comprise. C'est cohérent avec tes 69,5 mm de plaque plus les 1,5 mm de buse qui dépassent. Les 23 mm d'épaisseur doivent compter un relief (ventilateur ou connecteur) : le boîtier a de la place jusqu'à 23,6 mm au-dessus des plots, donc les deux valeurs passent. La fiche donne aussi un tuyau de 6 mm intérieur pour la buse, ce qui va avec ton Ø 5 extérieur à quelques dixièmes près : l'encoche fait 5,4 mm.
-- **Une supposition** : les trous du BME680 sont sur le bord opposé au fil, à 3 mm du bord (`bme_trou_y`). Si ce n'est pas le cas sur ton module, change cette valeur.
 
 ## 2. Comment le boîtier est organisé
 

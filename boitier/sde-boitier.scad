@@ -71,7 +71,7 @@ sds_vis_d = 2.2;     // avant-trou pour vis M2,5 autotaraudeuse
 bme_l = 16;
 bme_h = 18;
 bme_trou_dx = 11;    // entraxe des 2 trous (Ø 3)
-bme_trou_y = 3;      // centre des trous depuis le bord du bas du module (supposé)
+bme_trou_y = 6;      // centre des trous depuis le bord du bas du module, côté puce (mesuré)
 bme_vis_d = 2.2;     // avant-trou pour vis M2,5 autotaraudeuse
 bme_bas = false;     // true = BME680 en bas de la chambre (plus loin de l'ESP32, fil de 15 cm)
 chambre = 28;        // largeur intérieure de la chambre d'air frais
