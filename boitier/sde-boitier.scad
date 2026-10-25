@@ -375,11 +375,20 @@ module support() {
 // S'imprime base sur le plateau (la pièce « pied » est exportée dans ce sens).
 
 pied_h = pied_leve + plaque_h;
-module pied() {
+module pied() intersection() {
+  translate([-500, 0, -500]) cube(1000);   // rien sous la table
+  pied_brut();
+}
+module pied_brut() {
   // Plaque inclinée et rail (même rail que le support mural)
   rotate([-pied_incl, 0, 0]) {
     translate([-plaque_l / 2, 0, 0]) boite(plaque_l, pied_h, pied_ep, 3);
     translate([0, pied_leve + 2, pied_ep - 0.01]) aronde(rail_base, rail_tete, rail_haut, rail_long, rail_conicite);
+    // Biseau à 45° sous le rail : il s'imprime sans support et entre dans la rainure
+    hull() {
+      translate([0, pied_leve + 2, pied_ep - 0.01]) aronde(rail_base, rail_tete, rail_haut, 0.01, 0);
+      translate([-rail_base / 2, pied_leve + 2 - rail_haut, pied_ep - 0.01]) cube([rail_base, 0.01, 0.01]);
+    }
   }
   // Base
   translate([0, pied_ep, 0]) rotate([90, 0, 0]) linear_extrude(pied_ep)
@@ -395,7 +404,7 @@ module pied() {
 
 if (piece == "corps") corps();
 else if (piece == "capot") translate([L, 0, capot_ep]) rotate([0, 180, 0]) capot();  // face avant sur le plateau
-else if (piece == "socle") translate([0, 0, socle_ep]) socle();  // fond sur le plateau
+else if (piece == "socle") translate([0, H, 0]) rotate([180, 0, 0]) socle();  // côté boîtier (fond plein) sur le plateau
 else if (piece == "support") support();
 else if (piece == "pied") rotate([90, 0, 0]) pied();             // base sur le plateau
 else if (piece == "interieur") { color("WhiteSmoke") corps(); fantomes(); }
