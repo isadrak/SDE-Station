@@ -144,7 +144,7 @@ firmware/build.sh --setup   # 1re fois : installe le cœur ESP32 2.0.17 et les b
 firmware/build.sh           # compile et produit firmware/dist/*-ota.bin et *-merged.bin
 ```
 
-Le script intègre d'abord l'application (`app/`) dans le firmware sous forme compressée. La version est dans `firmware/VERSION`. GitHub Actions compile à chaque push, et chaque tag `v*` publie les binaires dans une Release.
+Le script intègre d'abord l'application (`app/`) dans le firmware sous forme compressée. La version est dans `firmware/VERSION`. GitHub Actions compile à chaque push, et chaque tag `v*` (ou commit marqué `[release]`) publie les binaires dans une Release.
 
 ### Essayer l'application sans matériel
 
