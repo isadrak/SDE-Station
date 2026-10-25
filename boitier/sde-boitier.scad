@@ -4,7 +4,7 @@
 //   corps    : le boîtier, ouvert à l'avant. Compartiment électronique en haut,
 //              compartiment air en bas : SDS011 à gauche, chambre d'air frais à droite
 //              (entrée de la buse du SDS011 et BME680).
-//   capot    : la façade avant, vissée sur le corps (6 vis M3 dans des inserts laiton).
+//   capot    : la façade avant, vissée sur le corps (6 vis M3 directement dans le plastique).
 //   socle    : la pièce vissée au dos du corps. Elle porte la bande LED, tournée vers
 //              le mur (effet de halo), et la rainure en queue d'aronde.
 //   support  : la plaque vissée au mur, avec le rail en queue d'aronde. On pose le
@@ -103,8 +103,9 @@ pied_arriere = 32;   // et derrière
 pied_ep = 5;
 
 /* [Visserie] */
-insert_d = 4.0;      // inserts laiton M3 (trou 4,0 mm, profondeur 6)
-insert_prof = 6.5;
+inserts = false;     // true = inserts laiton M3 à chaud (trou 4,0 mm) ; false = vis M3 directement dans le plastique
+insert_d = inserts ? 4.0 : 2.5;   // diamètre du trou des vis M3 du capot et du socle
+insert_prof = 6.5;   // profondeur du trou (vis M3 x 8)
 vis_d = 3.4;
 vis_tete = 6.4;      // M3 tête fraisée
 
@@ -332,7 +333,7 @@ module socle() {
         translate([L / 2 - (rail_tete + 10) / 2, 0, -socle_ep]) cube([rail_tete + 10, socle_retrait + rainure_long + 8, socle_ep]);
         contour_socle(0);
       }
-      // Bossages des inserts
+      // Bossages des vis du corps
       for (v = vis_socle) translate([v[0], v[1], -9]) cylinder(d = 8, h = 9);
     }
     // Rainure en queue d'aronde, ouverte vers le mur et vers le bas
