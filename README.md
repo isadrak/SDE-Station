@@ -109,12 +109,12 @@ Sujets MQTT sous `sde/<SDE-XXXX>/` : `status` (testament online/offline), `info`
 Carte porteuse dessinée sous KiCad, fabriquée et soudée : l'ESP32-DevKitC-32E et le MH-Z19B sur connecteurs femelles, des connecteurs JST pour le BME680 et le SDS011, un condensateur de 220 µF sur le 5 V et un découplage de 100 nF sur le 3,3 V.
 
 <p align="center">
-  <img src="docs/images/pcb-3d.png" width="520" alt="Carte porteuse, vue 3D KiCad">
+  <img src="docs/images/pcb-3d.png" width="560" alt="Carte porteuse, vue 3D KiCad">
 </p>
 
 | Schéma | Routage |
 |:---:|:---:|
-| <img src="docs/images/pcb-schema.png" width="420" alt="Schéma KiCad"> | <img src="docs/images/pcb-routage.png" width="420" alt="Routage du PCB"> |
+| <img src="docs/images/pcb-schema.png" width="440" alt="Schéma KiCad"> | <img src="docs/images/pcb-routage.png" width="440" alt="Routage du PCB"> |
 
 Leçons de la V1, à corriger en V2 : le GND du MH-Z19B n'était pas routé (fil volant ajouté sur la carte fabriquée), et R1/R2 se sont retrouvées en série sur SDA/SCL au lieu d'être des résistances de tirage (pontées, le module BME680 a déjà les siennes).
 
