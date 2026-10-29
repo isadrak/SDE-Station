@@ -166,8 +166,8 @@ vis_capot = [
 sv = socle_retrait + socle_paroi + 6;
 vis_socle = [[sv, sv + 8], [L - sv - 8, sv + 8], [L / 2 - 25, H - sv], [L / 2 + 25, H - sv]];
 
-// Passage du câble de la bande LED (dos du corps -> intérieur du socle)
-trou_led = [L - 30, H - 14];
+// Passage du câble de la bande LED (dos du corps -> intérieur du socle), au centre, loin des vis du socle
+trou_led = [L / 2, H - 14];
 
 // Rainure de la glissière : au centre, ouverte en bas du socle
 rainure_long = rail_long + 2;
