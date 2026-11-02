@@ -6,6 +6,8 @@ Station de mesure de la qualité de l'air intérieur : ESP32 sur une carte KiCad
 
 Démo en ligne : https://isadrak.github.io/SDE-Station/ (bouton « Voir une démonstration », données simulées).
 
+Ce dépôt a été créé à partir de mon dossier de travail une fois la station fonctionnelle, d'où le gros premier commit.
+
 <img src="docs/images/accueil-ordinateur.png" alt="Accueil de l'application SDE" width="820">
 
 ---
