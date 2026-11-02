@@ -17,7 +17,7 @@
 // Z = profondeur (0 = dos du corps, vers l'avant = vers la pièce).
 // Le corps s'imprime tel quel, dos sur le plateau.
 //
-// Cotes : carte relevée sur le STEP de KiCad, capteurs mesurés par Isaac le 2026-10-25.
+// Cotes : carte relevée sur le STEP de KiCad, capteurs mesurés au pied à coulisse.
 
 piece = "assemblage"; // [corps, capot, socle, support, pied, assemblage, interieur, sur_table]
 

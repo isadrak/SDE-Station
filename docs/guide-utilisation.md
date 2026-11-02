@@ -11,16 +11,16 @@ Ce guide accompagne le [README](../README.md). Les fichiers binaires (firmware `
 | `sde-firmware-X.Y.Z-ota.bin` (Releases) | Le même firmware, pour la mise à jour par Wi-Fi |
 | `boitier/` | Boîtier imprimable en 3D, socle avec bande LED, support mural coulissant et pied de table (voir `boitier/LISEZMOI.md`) |
 | `app/` | Application d'analyse (`sde-analyse.html`), son manifeste, son service worker et ses icônes. Tout est intégré dans le firmware : la station sert elle-même l'application |
-| `android/` | Appli Android : `sde.apk` (aussi dans les Releases) et sa source (coquille qui charge la page de la station, section 3 bis) |
+| `android/` | Appli Android : `sde.apk` (aussi dans les Releases) et sa source (coquille qui charge la page de la station, section 4) |
 
 ## 1. Flasher l'ESP32 en USB (une fois, puis par Wi-Fi)
 
-Inutile si la station a déjà la 0.4.0 ou plus : passe alors par le Wi-Fi (section 4).
+Une fois la station flashée, les mises à jour suivantes passent par le Wi-Fi (section 5).
 
 1. Branche l'ESP32 en USB.
 2. Dans Chrome ou Edge, ouvre https://espressif.github.io/esptool-js/
 3. Baudrate 921600, clique sur **Connect** et choisis le port de l'ESP32 (CP210x ou « USB to UART »).
-4. Flash Address `0x0`, choisis `sde-firmware-0.9.8-merged.bin`, puis clique sur **Program**.
+4. Flash Address `0x0`, choisis `sde-firmware-X.Y.Z-merged.bin`, puis clique sur **Program**.
    Jamais le fichier `-ota.bin` par câble : à l'adresse `0x0`, il écrase le démarreur et la station affiche en boucle « invalid header » (il faut alors refaire cette étape avec le `-merged.bin`).
 5. À la fin, clique sur **Disconnect**, ferme l'onglet et appuie sur le bouton **EN** de l'ESP32.
 
@@ -70,7 +70,7 @@ Sans le réglage de l'étape 3, **Ajouter à l'écran d'accueil** fonctionne aus
 
 Une installation est liée à une adresse : celle faite sur `192.168.4.1` marche quand le téléphone est sur le Wi-Fi SDE-XXXX. Si tu utilises la station sur le Wi-Fi de la maison, réserve-lui une IP fixe dans ta box pour que l'adresse ne change pas.
 
-## 3 bis. L'appli Android (APK, recommandée sur Android)
+## 4. L'appli Android (APK, recommandée sur Android)
 
 Sur Android, Chrome remet sa barre d'adresse par-dessus l'appli installée depuis la station, parce que la station parle en HTTP. L'APK règle ça : une vraie appli plein écran.
 
@@ -78,19 +78,19 @@ Sur Android, Chrome remet sa barre d'adresse par-dessus l'appli installée depui
 2. Android demande d'autoriser l'installation depuis cette source (Chrome, Fichiers ou Gmail) : accepte, puis **Installer**. Play Protect peut dire qu'il ne connaît pas l'appli : **Installer quand même**.
 3. Ouvre **SDE**. L'appli cherche la station toute seule : `192.168.4.1` (Wi-Fi SDE-XXXX), sa dernière adresse sur le Wi-Fi de la maison, `sde.local`, puis l'accès à distance s'il est réglé.
 
-Mises à jour : rien à faire. Quand tu mets la station à jour (firmware 0.8.8 ou plus récent), l'appli voit le nouveau numéro de version, télécharge la page de la station et l'utilise. L'APK lui-même ne change que si la coquille Android change.
+Mises à jour : rien à faire. Quand tu mets la station à jour, l'appli voit le nouveau numéro de version, télécharge la page de la station et l'utilise. L'APK lui-même ne change que si la coquille Android change.
 
 Ce que l'APK fait en plus de la page : il passe par le Wi-Fi même quand celui-ci n'a pas Internet (plus besoin de couper les données mobiles), le bouton retour ferme les fenêtres puis revient à l'accueil, et les exports CSV demandent où enregistrer le fichier. Android 6 ou plus récent.
 
 Pour reconstruire l'APK (sans Android Studio, sous Linux) : `apt install android-sdk-platform-23 aapt zipalign apksigner dalvik-exchange` et un JDK, puis `cd android && ./build.sh <versionCode> <versionName> <firmware de la page> <keystore> <mot de passe>`. Une mise à jour de l'APK doit être signée avec la même clé que la première version, sinon Android refuse de l'installer par-dessus.
 
-## 4. Mettre à jour le firmware par Wi-Fi
+## 5. Mettre à jour le firmware par Wi-Fi
 
 **Depuis l'application :** onglet **Réglages**, section **Mise à jour**. Choisis le fichier `sde-firmware-X.Y.Z-ota.bin` (pas le « merged »), entre le mot de passe du Wi-Fi de la station et clique sur **Installer**. La station vérifie le fichier, l'installe, puis redémarre. Réglages et historique sont conservés. Si l'envoi est coupé, l'ancienne version reste en place.
 
 **En ligne de commande** (ordinateur sur le même réseau que la station) : `curl -F "f=@sde-firmware-X.Y.Z-ota.bin" "http://sde.local/api/update?pass=<mot de passe>"`.
 
-## 5. Historique et heure
+## 6. Historique et heure
 
 - **Heure réelle :** quand la station est sur le Wi-Fi de la maison, elle prend l'heure sur Internet (NTP) et la remet à jour régulièrement. Sinon, l'application lui donne l'heure du téléphone ou de l'ordinateur à chaque connexion. Le fuseau est celui du Québec (`TIMEZONE` dans `config.h`).
 - **Historique en flash :** la station garde une moyenne par minute pendant 30 jours. Elle l'écrit en flash toutes les 5 minutes, donc une coupure de courant fait perdre au plus 5 minutes. Les minutes mesurées avant de connaître l'heure restent en RAM et sont datées puis écrites dès que l'heure arrive.
@@ -98,14 +98,14 @@ Pour reconstruire l'APK (sans Android Studio, sous Linux) : `apt install android
 - **Export :** onglet **Réglages**, section **Mes données**, **Télécharger**. Le fichier contient tout l'historique, avec l'heure UTC et l'heure locale, et peut être réimporté dans l'application.
 - **Remise à zéro :** **Effacer l'historique**, dans la même section. Le mot de passe du Wi-Fi de la station est demandé.
 
-## 6. Courbes et conseils
+## 7. Courbes et conseils
 
 - **Lissage des courbes** (case **Lissage** de l'onglet Mesures, en vue ingénieur ; actif par défaut) : un filtre médian sur 5 points enlève les points isolés, puis une moyenne gaussienne sur une fenêtre propre à chaque mesure (CO2 1 min, température 2,5 min, humidité 3 min, indice COV 5 min, pression 10 min), plus longue quand la période affichée s'allonge. L'axe vertical fait au moins quelques fois la précision du capteur (humidité 8 %, température 2 °C, CO2 200 ppm, COV 20, pression 6 hPa, particules 10 µg/m³) : une variation de quelques dixièmes reste plate. Code : `SMOOTH_S`, `MIN_SPAN`, `downsample()`.
 - **Valeurs affichées « maintenant »** : médiane des 90 dernières secondes.
 - **Conseils pour toi** (l'essentiel sur l'Accueil, tout dans Mesures > Analyse et conseils) : calculés sur les dernières 24 h minute par minute et, pour les habitudes, sur 7 jours en moyennes de 10 min. Pour chaque mesure, l'appli compte le temps passé au-delà de chaque seuil, le plus long épisode, les heures où ça arrive, puis croise les mesures pour trouver la cause et le geste qui va avec. Exemples : CO2 élevé surtout la nuit (chambre fermée), vitesse de baisse du CO2 quand tu aères (renouvellements d'air par heure, d'où la durée d'aération conseillée), air sec en hiver avec CO2 très bas (trop de ventilation) ou avec un chauffage élevé (humidité qu'on aurait à 21 °C), humidité haute avec ou sans CO2 haut, hausses brusques d'humidité (douche, cuisson), point de rosée et buée, pics de particules avec baisse de l'indice COV (cuisson) ou surtout en PM10 (poussière), particules hautes sans pic (pollution extérieure), chute rapide de la pression. Seuils : EN 16798-1, AQI de l'EPA, Santé Canada (CO2 < 1000 ppm sur 24 h), OMS 2021 (PM2.5 < 15 µg/m³ sur 24 h), 5000 ppm (limite au travail), humidex d'Environnement Canada, termes de tendance de pression du Met Office. Code : `buildRecs()` et les fonctions `rec…()` dans `app/sde-analyse.html`.
 - Le tableau « Statistiques de la période » (min, moyenne, 95e centile, max) n'apparaît qu'en vue ingénieur.
 
-## 7. La note de qualité de l'air (1 à 5 barres) et ses sources
+## 8. La note de qualité de l'air (1 à 5 barres) et ses sources
 
 La note ne contient aucun poids ni réglage maison. Chaque mesure est classée par sa norme publiée, ramenée sur 5 barres (5 = excellent, 1 = très mauvais). La note globale est **la plus basse** des notes, la règle de l'indice AQI de l'EPA, qui retient le pire polluant. Code : `SCALES`, `nowCast()` et `airVerdict()` dans `app/sde-analyse.html`.
 
@@ -124,20 +124,20 @@ La note ne contient aucun poids ni réglage maison. Chaque mesure est classée p
   - la température, qui relève du confort thermique et non de la qualité de l'air. La tuile Température utilise tout de même les catégories de EN 16798-1 : en saison de chauffe (octobre à avril), 21-23 / 20-24 / 19-25 / 17-26 °C ; l'été, 23,5-25,5 / 23-26 / 22-27 / 21-28 °C.
 - **Limites :** les catégories CO2 et humidité de EN 16798-1 servent à la conception des bâtiments. L'AQI vise des moyennes sur 24 h (PM), ici approchées par le NowCast. La station n'est pas un appareil de mesure réglementaire.
 
-## 8. L'interface (version 0.7)
+## 9. L'interface
 
 - **Trois onglets :** Accueil, Mesures et Réglages. Sur téléphone, ils sont en bas de l'écran.
 - **Une seule échelle de note**, de 5 (excellent) à 1, avec les mêmes couleurs que la bande LED, partout : l'anneau, la bande des 24 dernières heures, les tuiles, la couleur des courbes et les conseils. Chaque note a sa forme d'icône (coche, point d'exclamation, triangle, octogone), pour ne pas dépendre de la couleur seule. Une information sans jugement (pression, pièce fraîche, indice COV) a une icône neutre grise.
 - **Accueil :** l'anneau, la phrase d'action, la bande des 24 h (touche une heure pour ouvrir Mesures sur 24 h), quatre tuiles et les conseils les plus utiles. Quand tu aères, l'appli le voit toute seule (le CO2 baisse d'au moins 100 ppm, à 10 ppm par minute ou plus) : elle dit de combien il a baissé et quand refermer, sans bouton à toucher.
 - **Mesures :** un bloc par mesure (valeur, état, tendance sur 10 min, graphique dont la courbe prend la couleur de la zone de la norme : un dégradé continu, du vert au orange, et vers le bleu quand la pièce est fraîche), puis COV et pression dans « Plus de mesures », puis l'analyse complète.
-- **Nom de la pièce et lumière murale :** dans Réglages. Le nom est gardé par la station (firmware 0.7.0) et par l'appli. La première connexion à une station sans nom ouvre un petit assistant (pièce, Wi-Fi de la maison, lumière).
+- **Nom de la pièce et lumière murale :** dans Réglages. Le nom est gardé par la station et par l'appli. La première connexion à une station sans nom ouvre un petit assistant (pièce, Wi-Fi de la maison, lumière).
 - **Vue ingénieur** (Réglages > Apparence) : ajoute le nom et la technologie de chaque capteur, le détail de la note (sous-indices, NowCast, norme de chaque mesure), le tableau des statistiques, les périodes 15 min et 6 h, la case Lissage, le point de rosée, et les cartes Connexion, Capteurs, Acquisition (période d'échantillonnage, cycle du SDS011, auto-calibration ABC), Réseau, Stockage, Application web progressive et Journal. Les calculs sont exactement les mêmes dans les deux vues.
 
-## 9. Voir la station de partout (accès à distance, firmware 0.8.0)
+## 10. Voir la station de partout (accès à distance)
 
 La station envoie ses mesures à un serveur MQTT gratuit sur Internet (EMQX Cloud, offre Serverless, sans carte bancaire), par une liaison chiffrée (TLS). L'application s'y connecte depuis n'importe quel réseau : 4G, école, chez des amis. À faire une seule fois :
 
-1. **Installer le firmware 0.9.8** (ou plus récent) : Réglages > Mise à jour, fichier `sde-firmware-0.9.8-ota.bin`. La station doit être connectée au Wi-Fi de la maison (elle a besoin d'Internet).
+1. **Mettre la station à jour** si besoin (Réglages > Mise à jour, fichier `-ota.bin`). La station doit être connectée au Wi-Fi de la maison (elle a besoin d'Internet).
 2. **Créer le serveur gratuit** sur https://www.emqx.com/en/cloud (« Get Started Free ») :
    - **New Deployment**, choisis **Serverless**, une région proche (par exemple AWS N. Virginia), laisse la limite de dépense à 0 pour rester dans l'offre gratuite, puis **Deploy** ;
    - page **Overview** du déploiement : copie l'**adresse** (elle finit par `emqxsl.com`) ;
@@ -156,27 +156,25 @@ L'application de la station (`http://sde.local`) passe aussi toute seule par le 
 
 ## Si la station redémarre toute seule
 
-Depuis la 0.8.3, la station garde la cause de ses 7 derniers démarrages. L'appli affiche un bandeau quand un démarrage n'était pas voulu, et la vue ingénieur (Réglages > Connexion) montre le détail. Les causes possibles :
+La station garde la cause de ses 7 derniers démarrages. L'appli affiche un bandeau quand un démarrage n'était pas voulu, et la vue ingénieur (Réglages > Connexion) montre le détail. Les causes possibles :
 - **Chute de tension** (`brownout`) : le chargeur ou le câble ne suit pas, à cause du ventilateur du SDS011, du Wi-Fi et de la lumière. Prends un chargeur d'au moins 1 A et un câble court, ou baisse la lumière.
 - **Programme bloqué** (`task_wdt`) ou **plantage** (`panic`) : c'est un bogue du firmware. Branche la station en USB, ouvre un moniteur série à 115200 bauds et envoie la trace affichée au moment du redémarrage.
-
-La version 0.7.1 (Releases) reste disponible pour revenir à la version sans accès à distance, et voir si le problème vient de là.
 
 ## À savoir
 
 - **MH-Z19B :** il préchauffe pendant 3 minutes après chaque mise sous tension. Ses valeurs sont alors fausses : le firmware ne les envoie pas, et elles ne sont ni affichées ni enregistrées. L'application affiche « Préchauffage » avec le temps restant.
 - **SDS011, durée de vie :** son laser dure environ 8000 h en continu. Le firmware le fait donc dormir : toutes les 5 minutes, il le réveille, fait tourner le ventilateur 30 s pour renouveler l'air, moyenne 10 s de mesures, puis le rendort. Il ne travaille ainsi que ~13 % du temps. Tu peux changer le cycle dans l'application (1, 5, 15 ou 30 min, ou en continu) ou lancer une mesure immédiate.
 - **BME680 et SDS011 :** branche-les **ESP32 débranché**. Au redémarrage, le firmware les détecte tout seul (BME680 à l'adresse 0x77 ou 0x76). Tant qu'ils sont absents, l'application l'indique et le reste fonctionne.
-- **BME680 « pas détecté » :** depuis la 0.2.3, le firmware vérifie d'abord que SDA et SCL ne sont pas collées au GND, puis scanne le bus I2C et l'application dit ce qu'il a trouvé : rien du tout (câblage, ordre des broches), une autre adresse, ou un module qui est en fait un BME280/BMP280.
+- **BME680 « pas détecté » :** le firmware vérifie d'abord que SDA et SCL ne sont pas collées au GND, puis scanne le bus I2C et l'application dit ce qu'il a trouvé : rien du tout (câblage, ordre des broches), une autre adresse, ou un module qui est en fait un BME280/BMP280.
 - **MH-Z19B qui ne répond pas :** la pastille de l'application indique combien d'octets le capteur a renvoyés. 0 octet veut dire qu'aucun signal n'arrive (alimentation, GND ou fils TX/RX). Si RX et TX sont croisés à l'envers, le firmware les inverse tout seul et l'application le signale dans le journal.
 - **Plage du CO2 :** au démarrage, le firmware règle le MH-Z19B sur 0 à 5000 ppm (commande 0x99, `CO2_RANGE_PPM` dans `config.h`). Certains modules sortent d'usine en 0 à 2000 ppm et plafonnent alors à 2000. La carte Capteurs de l'application affiche la plage, relue dans le capteur quand il le permet.
 - **Calibration CO2 :** l'auto-calibration (ABC) est désactivée à chaque démarrage, puis son état est relu dans le capteur (commande 0x7D) et affiché dans l'onglet Réglages, section Capteurs (vue ingénieur). Si tu l'actives depuis l'application, elle redevient désactivée au prochain redémarrage. Pour calibrer, laisse la station 20 minutes à l'air extérieur, puis utilise le bouton « Calibrer le CO2 à 400 ppm ».
-- **Indice COV :** il est relatif (100 = air le plus propre vu depuis le démarrage). Ce n'est pas l'IAQ calibré de Bosch BSEC, et il lui faut 10 à 30 minutes pour se stabiliser. Si la station passe dehors, l'air froid et propre fixe une référence très haute et l'indice reste bas une fois rentrée, pendant quelques heures. Un redémarrage remet la référence à zéro. Depuis la 0.6.0, la résistance du capteur est lissée sur environ 1 min avant le calcul, et l'humidité et la pression sont suréchantillonnées davantage : beaucoup moins de bruit d'un point à l'autre.
+- **Indice COV :** il est relatif (100 = air le plus propre vu depuis le démarrage). Ce n'est pas l'IAQ calibré de Bosch BSEC, et il lui faut 10 à 30 minutes pour se stabiliser. Si la station passe dehors, l'air froid et propre fixe une référence très haute et l'indice reste bas une fois rentrée, pendant quelques heures. Un redémarrage remet la référence à zéro. La résistance du capteur est lissée sur environ 1 min avant le calcul.
 - **Redémarrer et réinitialiser :** onglet **Réglages**, section **Avancé**. **Redémarrer** garde tout. **Réinitialisation d'usine** (mot de passe de la station demandé) efface le Wi-Fi de la maison, le mot de passe du point d'accès (il redevient `sde-station`) et tout l'historique. La station n'est alors joignable que sur son Wi-Fi SDE-XXXX, à `http://192.168.4.1`.
 
 ## Ce que fait le firmware
 
-- Un serveur web qui accepte plusieurs connexions à la fois et sert la première qui a envoyé sa requête (`net/pooled_server.*`) : une connexion ouverte d'avance par Chrome sans requête ne bloque plus tout le reste.
+- Un serveur web qui accepte plusieurs connexions à la fois et sert la première qui a envoyé sa requête (`net/pooled_server.*`) : une connexion ouverte d'avance par Chrome sans requête ne bloque pas les autres.
 - Si le Wi-Fi de la maison est injoignable, les nouveaux essais sont espacés (15 s, 30 s, 1, 2 puis 5 min) : chaque essai balaie les canaux et faisait décrocher le point d'accès.
 - Trois tâches FreeRTOS : les capteurs sur le cœur 1, l'USB et le serveur web sur le cœur 0. Les capteurs et le reste sont reliés par une file, et toutes les tâches sont surveillées par le watchdog.
 - Le Wi-Fi : un point d'accès toujours actif, plus une connexion optionnelle au Wi-Fi de la maison (identifiants gardés en mémoire non volatile), mDNS `sde.local` et un portail captif.
@@ -216,12 +214,12 @@ Le contenu du dossier `app/` est intégré au firmware sous forme compressée (`
 cd firmware
 node tools/gen_assets.js
 ```
-Si tu modifies `app/sw.js`, change aussi le nom du cache (`sde-v13` en 0.9.7) pour que les téléphones prennent la nouvelle version.
+Si tu modifies `app/sw.js`, change aussi le nom du cache pour que les téléphones prennent la nouvelle version.
 
 L'appli en ligne (GitHub Pages) se met à jour toute seule à chaque push qui touche `app/`.
 
 `gen_assets.js` retire l'indentation et les lignes de commentaire de la page avant de la compresser (environ 7 ko de gagnés) : le fichier `app/sde-analyse.html` reste lisible. Le firmware 0.9.8 occupe 99 % de la place réservée au programme (1,25 Mo, table de partitions par défaut). Pour ajouter beaucoup plus, il faudra passer à une table avec un programme plus grand, ce qui demande un flash par USB.
 
-## Prochaines étapes prévues dans le Notion
+## Suite
 
-MQTT avec TLS : fait (section 9, vers EMQX Cloud). Reste InfluxDB et Grafana, qui pourront s'abonner aux mêmes sujets. L'historique en flash sert déjà de tampon : l'appli le relit à distance.
+Un tableau de bord InfluxDB + Grafana pourra s'abonner aux mêmes sujets MQTT. L'historique en flash sert déjà de tampon : l'appli le relit à distance.
