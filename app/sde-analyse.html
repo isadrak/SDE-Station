@@ -967,7 +967,7 @@ function rowFromData(msg, t) {
   sensors.lastSeen = Date.now();
   if (msg.ts) t = msg.ts * 1000;   // heure réelle donnée par la station
   return {
-    t, co2: c.ok && !c.warm ? (c.ppm ?? null) : null, warm: !!c.warm,   // rien pendant le préchauffage
+    t, up: msg.up ?? null, co2: c.ok && !c.warm ? (c.ppm ?? null) : null, warm: !!c.warm,   // rien pendant le préchauffage
     pm25: pm.pm25 ?? null, pm10: pm.pm10 ?? null,
     temp: e.ok ? e.t : null, rh: e.ok ? e.rh : null, p: e.ok ? e.p : null,
     gas: e.ok ? e.gas : null, voc: e.ok ? (e.voc ?? null) : null,
@@ -1238,7 +1238,7 @@ async function loadWeek() {
 function histRows(h, step = 60000) {
   const now = Date.now(), idx = Object.fromEntries(h.cols.map((c, i) => [c, i]));
   return h.rows.map(r => ({
-    t: r[idx.ts] ? r[idx.ts] * 1000 : now - (h.up - r[idx.up]) * 1000,
+    t: r[idx.ts] ? r[idx.ts] * 1000 : now - (h.up - r[idx.up]) * 1000, up: r[idx.up] ?? null,
     co2: r[idx.co2], pm25: r[idx.pm25], pm10: r[idx.pm10], temp: r[idx.t], rh: r[idx.rh],
     p: r[idx.p], voc: r[idx.voc], dew: r[idx.dew], hist: true, step,
   }));
@@ -2197,6 +2197,8 @@ function trendText(k) {
     const parts = [];
     if (p10 != null) parts.push(`PM10 : ${fmt(p10, 1)} µg/m³`);
     if (age > 90) parts.push(`mesuré il y a ${fmtDur(age)}`);
+    const why = pmLast("pm25")?.why;
+    if (why) parts.push({ settle: "pas comptée : démarrage", humid: "pas comptée : air trop humide", spike: "pas comptée tant qu'elle ne dure pas" }[why]);
     return cap(parts.join(" · "));
   }
   if (k === "p") { const tr = pressureTrend(); return tr.d == null ? "" : `${tr.d > 0 ? "+" : "−"}${fmt(Math.abs(tr.d), 1)} hPa en 3 h`; }
@@ -2324,19 +2326,75 @@ function gradeOf(k, v) {
   for (let i = 0; i < sc.band.length; i++) if (v >= sc.band[i][0] && v <= sc.band[i][1]) return 5 - i;
   return 2;   // hors catégorie III : catégorie IV (inconfort, pas toxique)
 }
+// ------------------------------------------------------------ Particules : mesures retenues
+// Le SDS011 donne parfois une valeur qui ne dit rien de l'air de la pièce.
+// Ces mesures restent affichées, mais n'entrent ni dans la note ni dans la
+// bande des 24 h :
+//  - « settle » : les 10 premières minutes après la mise sous tension. La
+//    chambre de mesure et le ventilateur soulèvent la poussière déposée, et
+//    la station vient en général d'être manipulée (boîtier refermé, posée).
+//  - « spike » : un pic isolé. Filtre de Hampel sur les 3 mesures d'avant et
+//    les 3 d'après (30 min au plus) : la mesure dépasse la médiane de ses
+//    voisines de plus de 3 écarts absolus médians (× 1,4826), d'au moins
+//    10 µg/m³ et d'au moins deux fois la médiane. Une hausse qui dure n'est
+//    plus isolée dès la 3e mesure haute (environ 15 min) : elle compte.
+//  - « humid » : humidité de 75 % ou plus. Les particules absorbent l'eau et
+//    grossissent, le capteur optique surestime alors fortement (Jayaratne et
+//    al. 2018, Environmental Pollution ; Badura et al. 2018).
+const PM_SETTLE_S = 600, PM_RH_MAX = 75, PM_SPIKE_ABS = 10, PM_SPIKE_WIN = 30 * 60e3;
+const pmCache = {};
+function pmMarks(key) {
+  const last = data.at(-1);
+  if (!last) return [];
+  const ck = `${data.length}|${data[0].t}|${last.t}`;
+  if (pmCache[key]?.ck === ck) return pmCache[key].list;
+  const pts = [];
+  for (let i = data.length - 1; i >= 0 && data[i].t >= last.t - 25 * 3600e3; i--) if (data[i][key] != null) pts.push(data[i]);
+  pts.reverse();
+  const settle = r => r.up != null && r.up < PM_SETTLE_S;
+  const list = pts.map((r, i) => {
+    const v = r[key];
+    if (settle(r)) return { r, v, why: "settle" };
+    if (r.rh != null && r.rh >= PM_RH_MAX) return { r, v, why: "humid" };
+    const nb = [];
+    for (let j = i - 1; j >= 0 && nb.length < 3 && r.t - pts[j].t <= PM_SPIKE_WIN; j--) if (!settle(pts[j])) nb.push(pts[j][key]);
+    for (let j = i + 1, n = 0; j < pts.length && n < 3 && pts[j].t - r.t <= PM_SPIKE_WIN; j++, n++) nb.push(pts[j][key]);
+    if (nb.length >= 2) {
+      const med = medianOf(nb), mad = medianOf(nb.map(x => Math.abs(x - med))), d = v - med;
+      if (d >= PM_SPIKE_ABS && v >= 2 * med && d > 3 * 1.4826 * mad) return { r, v, why: "spike", med };
+    }
+    return { r, v, why: null };
+  });
+  pmCache[key] = { ck, list };
+  return list;
+}
+// Dernière mesure de particules et pourquoi elle est écartée (null = retenue).
+function pmLast(key) {
+  const e = lastEntry(key);
+  if (!e) return null;
+  const m = pmMarks(key).at(-1);
+  const rh = lastValue("rh");
+  if (m && m.why === "settle") return m;
+  if (rh != null && rh >= PM_RH_MAX) return { r: e, v: e[key], why: "humid", rh };
+  return m && m.r === e ? m : { r: e, v: e[key], why: null };
+}
+
 // NowCast de l'EPA pour les particules : moyennes horaires des 12 dernières
 // heures, pondérées par w = max(min/max, 0,5). Il faut 2 des 3 dernières
-// heures ; sinon on prend la moyenne de l'heure écoulée (« provisoire »).
+// heures ; sinon on prend la médiane de l'heure écoulée (« provisoire » : peu
+// de mesures, la médiane résiste mieux qu'une moyenne à une valeur forte).
+// Seules les mesures retenues (voir pmMarks) comptent.
 function nowCast(key) {
   if (!data.length) return null;
-  const end = data[data.length - 1].t, H = 3600e3, sums = new Array(12).fill(0), ns = new Array(12).fill(0);
-  for (let i = data.length - 1; i >= 0; i--) {
-    const r = data[i], h = Math.floor((end - r.t) / H);
-    if (h >= 12) break;
-    if (r[key] != null) { sums[h] += r[key]; ns[h]++; }
+  const end = data[data.length - 1].t, H = 3600e3, sums = new Array(12).fill(0), ns = new Array(12).fill(0), first = [];
+  for (const m of pmMarks(key)) {
+    const h = Math.floor((end - m.r.t) / H);
+    if (h >= 12 || m.why) continue;
+    sums[h] += m.v; ns[h]++;
+    if (h === 0) first.push(m.v);
   }
   const c = sums.map((x, i) => ns[i] ? x / ns[i] : null);
-  if (c.slice(0, 3).filter(x => x != null).length < 2) return c[0] != null ? { v: c[0], provisional: true } : null;
+  if (c.slice(0, 3).filter(x => x != null).length < 2) return c[0] != null ? { v: medianOf(first), provisional: true } : null;
   const valid = c.filter(x => x != null), mn = Math.min(...valid), mx = Math.max(...valid);
   const w = Math.max(mx > 0 ? mn / mx : 1, 0.5);
   let num = 0, den = 0;
@@ -2347,8 +2405,23 @@ function factor(k) {
   const now = lastValue(k);
   if (now == null || (k === "co2" && sensors.co2warm)) return null;   // capteur absent, en préchauffe ou mesure trop vieille
   let v = now, provisional = false;
-  if (k === "pm25" || k === "pm10") { const nc = nowCast(k); if (nc) ({ v, provisional } = nc); }
+  if (k === "pm25" || k === "pm10") {
+    const last = pmLast(k);
+    if (last && (last.why === "settle" || last.why === "humid")) return null;   // la note se fait sans les particules
+    const nc = nowCast(k);
+    if (!nc) return null;   // pas encore de mesure retenue (premier pic après le démarrage)
+    ({ v, provisional } = nc);
+  }
   return { k, now, v, provisional, grade: gradeOf(k, v), std: SCALES[k].std };
+}
+// Mesures présentes mais laissées hors de la note, pour le dire à l'écran.
+function skippedFactors() {
+  const out = [];
+  if (source && sensors.co2warm) out.push({ k: "co2", why: "warm" });
+  const p = pmLast("pm25") || pmLast("pm10");
+  if (p && (p.why === "settle" || p.why === "humid")) out.push({ k: "pm25", why: p.why });
+  else if (p && p.why === "spike" && !nowCast("pm25")) out.push({ k: "pm25", why: "spike" });
+  return out;
 }
 const FACTOR_ORDER = ["pm25", "pm10", "co2", "rh"];   // départage d'égalité, pour le texte seulement
 function airVerdict() {
@@ -2356,8 +2429,14 @@ function airVerdict() {
   if (!parts.length) return null;
   const grade = Math.min(...parts.map(x => x.grade));
   parts.sort((a, b) => a.grade - b.grade);
-  return { grade, level: STATUS_OF[grade], word: GRADE_WORDS[grade], parts };
+  return { grade, level: STATUS_OF[grade], word: GRADE_WORDS[grade], parts, skipped: skippedFactors() };
 }
+const SKIP_WORDS = {
+  warm: "CO2 en préchauffage",
+  settle: "particules en stabilisation après le démarrage",
+  humid: `particules faussées par l'humidité (≥ ${PM_RH_MAX} %)`,
+  spike: "particules : premier pic à confirmer",
+};
 const FACTOR_WORDS = { pm25: "particules fines", pm10: "grosses particules", co2: "CO2", rh: "humidité" };
 
 // Vue ingénieur : la note détaillée, avec son facteur limitant et sa norme.
@@ -2381,7 +2460,7 @@ function renderOverview() {
     const val = `${fmt(lim.v, m.dec)} ${m.unit}${lim.k.startsWith("pm") ? (lim.provisional ? " (moyenne de l'heure)" : " (NowCast 12 h)") : ""}`;
     why.textContent = grade === 5 ? "Toutes les mesures sont dans la meilleure catégorie de leur norme."
       : `Facteur limitant : ${m.label} à ${val}, ${lim.std}. ${grade <= 3 ? advice(lim.k, lim.now) : ""}`.trim();
-    $("verdictHow").textContent = `Sous-indices : ${parts.map(x => `${METRICS[x.k].label} ${x.grade}/5 (${x.std})`).join(", ")}. Note globale = minimum des sous-indices, comme l'AQI de l'EPA.`;
+    $("verdictHow").textContent = `Sous-indices : ${parts.map(x => `${METRICS[x.k].label} ${x.grade}/5 (${x.std})`).join(", ")}. Note globale = minimum des sous-indices, comme l'AQI de l'EPA. Particules : 10 premières minutes après le démarrage, pics isolés (filtre de Hampel) et mesures à ${PM_RH_MAX} % d'humidité ou plus écartés.${res.skipped.length ? ` Hors note pour l'instant : ${res.skipped.map(x => SKIP_WORDS[x.why]).join(" ; ")}.` : ""}`;
   }
   const last = data.at(-1);
   $("lastUpdate").textContent = last ? `Mise à jour ${fmtTime(last.t)}` : "Aucune mesure";
@@ -2405,10 +2484,18 @@ function measureState(key) {
   const v = lastValue(key);
   const off = word => ({ v: null, grade: 0, word, off: true });
   if (v == null) return off(offText(key));
-  if (key === "co2" || key === "pm25" || key === "pm10" || key === "rh") {
+  if (key === "pm25" || key === "pm10") {
+    const last = pmLast(key), f = factor(key);
+    if (last?.why === "settle") return { v, grade: 0, word: "Stabilisation", pm: last };
+    if (last?.why === "humid") return { v, grade: 0, word: "Faussée par l'humidité", pm: last };
+    if (last?.why === "spike") return { v, grade: f ? f.grade : 0, word: "Pic passager", f, pm: last };
+    if (!f) return off(offText(key));
+    return { v, grade: f.grade, word: STATE_WORDS.pm[f.grade], f, pm: last };
+  }
+  if (key === "co2" || key === "rh") {
     const f = factor(key);
     if (!f) return off(offText(key));
-    const words = key === "co2" ? STATE_WORDS.co2 : key === "rh" ? (v < 40 ? STATE_WORDS.rhDry : STATE_WORDS.rhWet) : STATE_WORDS.pm;
+    const words = key === "co2" ? STATE_WORDS.co2 : v < 40 ? STATE_WORDS.rhDry : STATE_WORDS.rhWet;
     return { v, grade: f.grade, word: words[f.grade], f };
   }
   if (key === "temp") {
@@ -2479,6 +2566,13 @@ const TILES = [
 ];
 
 function homeAction(res) {
+  const sk = res?.skipped.find(x => x.k === "pm25") || (pmLast("pm25")?.why === "spike" ? { why: "spike" } : null);
+  const pmNote = !sk ? "" : sk.why === "settle" ? " Le capteur de poussières se stabilise après le démarrage."
+    : sk.why === "humid" ? " L'humidité fausse le capteur de poussières : il n'est pas compté."
+    : " Pic passager de poussières, pas compté tant qu'il ne dure pas.";
+  return homeActionBase(res) + (res && res.grade < 5 && res.parts[0].k.startsWith("pm") ? "" : pmNote);
+}
+function homeActionBase(res) {
   if (!res) return !source ? "Connecte ta station pour voir la qualité de l'air." : sensors.co2warm ? "La station se prépare. La première note arrive dans quelques minutes." : "En attente des mesures.";
   if (res.grade === 5) return "L'air est excellent. Rien à faire.";
   const top = res.parts[0];
@@ -2536,7 +2630,8 @@ function renderHome() {
   const word = $("homeWord");
   word.textContent = res ? res.word : warm ? "Préparation" : "–";
   word.classList.toggle("small", word.textContent.length > 8);
-  $("homeSub").textContent = res ? `${grade} sur 5${source && sensors.co2warm ? " · sans le CO2" : ""}` : warm ? `prête dans ${fmtDur(left)}` : "qualité de l'air";
+  const without = res ? res.skipped.map(x => x.k === "co2" ? "le CO2" : "les poussières") : [];
+  $("homeSub").textContent = res ? `${grade} sur 5${without.length ? ` · sans ${joinFr(without)}` : ""}` : warm ? `prête dans ${fmtDur(left)}` : "qualité de l'air";
   $("homeRingWrap").setAttribute("aria-label", res ? `Qualité de l'air ${res.word.toLowerCase()}, ${grade} sur 5` : "Qualité de l'air : pas encore de note");
 
   // Phrase d'action : le CO2 qui monte passe avant tout le reste.
@@ -2628,7 +2723,11 @@ function renderDay() {
     const r = data[i], h = 23 - Math.floor((end - r.t) / HOUR);
     if (h < 0) break;
     if (h > 23) continue;
-    for (const k of keys) if (r[k] != null) { acc[h][k][0] += r[k]; acc[h][k][1]++; }
+    for (const k of keys) if (r[k] != null && !k.startsWith("pm")) { acc[h][k][0] += r[k]; acc[h][k][1]++; }
+  }
+  for (const k of ["pm25", "pm10"]) for (const m of pmMarks(k)) {
+    const h = 23 - Math.floor((end - m.r.t) / HOUR);
+    if (h >= 0 && h <= 23 && !m.why) { acc[h][k][0] += m.v; acc[h][k][1]++; }
   }
   const gs = acc.map(a => { const g = keys.filter(k => a[k][1]).map(k => gradeOf(k, a[k][0] / a[k][1])); return g.length ? Math.min(...g) : null; });
   let known = 0, good = 0;
@@ -2745,6 +2844,7 @@ function series(rows, from, to, step) {
     for (const r of rows) {
       const v = r[k];
       if (!isNum(v) || r.t < from || r.t >= to) continue;
+      if ((k === "pm25" || k === "pm10") && r.up != null && r.up < PM_SETTLE_S) continue;   // démarrage, voir pmMarks
       const i = Math.floor((r.t - from) / step);
       sum[i] += v; cnt[i]++;
     }

@@ -116,7 +116,13 @@ La note ne contient aucun poids ni réglage maison. Chaque mesure est classée p
 | CO2 (ppm) | ≤ 970 | ≤ 1220 | ≤ 1770 | ≤ 5000 | > 5000 | EN 16798-1:2019, catégories I à IV (550 / 800 / 1350 ppm au-dessus de l'extérieur, pris à 420 ppm) ; 5000 ppm = limite d'exposition professionnelle sur 8 h (OSHA, ACGIH, RSST au Québec) |
 | Humidité (%) | 30 à 50 | 25 à 60 | 20 à 70 | en dehors | – | EN 16798-1:2019, catégories I à IV |
 
-- **Particules :** la valeur notée est la moyenne **NowCast** de l'EPA, celle des cotes publiées heure par heure. Elle pondère les moyennes horaires des 12 dernières heures par w = max(min/max ; 0,5) et demande au moins 2 des 3 dernières heures. Avant cela, l'application prend la moyenne de l'heure écoulée et l'indique comme provisoire.
+- **Particules :** la valeur notée est la moyenne **NowCast** de l'EPA, celle des cotes publiées heure par heure. Elle pondère les moyennes horaires des 12 dernières heures par w = max(min/max ; 0,5) et demande au moins 2 des 3 dernières heures. Avant cela, l'application prend la médiane de l'heure écoulée et l'indique comme provisoire.
+- **Mesures de particules écartées :** certaines valeurs du SDS011 ne disent rien de l'air de la pièce. Elles restent affichées, mais n'entrent ni dans la note, ni dans la bande des 24 h, ni dans la couleur de la lumière murale :
+  - les **10 premières minutes après le démarrage** (« Stabilisation ») : le ventilateur soulève la poussière déposée dans la chambre de mesure, et la station vient en général d'être manipulée ;
+  - les **pics isolés** (« Pic passager ») : filtre de Hampel sur les 3 mesures d'avant et les 3 d'après (30 min au plus). Une mesure est écartée si elle dépasse la médiane de ses voisines de plus de 3 écarts absolus médians, d'au moins 10 µg/m³ et d'au moins deux fois la médiane. Une hausse qui dure n'est plus isolée dès la 3e mesure haute (environ 15 min) et compte normalement. La lumière murale, plus simple, prend la médiane des 3 dernières mesures ;
+  - l'**air à 75 % d'humidité ou plus** (« Faussée par l'humidité ») : les particules absorbent l'eau et grossissent, et le capteur optique surestime fortement (Jayaratne et al., 2018).
+
+  Pendant ce temps, la note s'affiche « sans les poussières ». Les conseils sur 24 h gardent les pics, qui sont de vrais événements (cuisson, ménage), mais pas les mesures de démarrage.
 - **CO2 :** pour comparaison, Santé Canada (2021) recommande moins de 1000 ppm en moyenne sur 24 h.
 - **Non comptés :**
   - l'indice COV du BME680, relatif et non calibré, auquel aucune norme ne s'applique ;
@@ -218,7 +224,7 @@ Si tu modifies `app/sw.js`, change aussi le nom du cache pour que les téléphon
 
 L'appli en ligne (GitHub Pages) se met à jour toute seule à chaque push qui touche `app/`.
 
-`gen_assets.js` retire l'indentation et les lignes de commentaire de la page avant de la compresser (environ 7 ko de gagnés) : le fichier `app/sde-analyse.html` reste lisible. Le firmware 0.9.8 occupe 99 % de la place réservée au programme (1,25 Mo, table de partitions par défaut). Pour ajouter beaucoup plus, il faudra passer à une table avec un programme plus grand, ce qui demande un flash par USB.
+`gen_assets.js` retire l'indentation et les lignes de commentaire de la page avant de la compresser (environ 7 ko de gagnés) : le fichier `app/sde-analyse.html` reste lisible. Le firmware 0.9.9 occupe 99 % de la place réservée au programme (1,25 Mo, table de partitions par défaut). Pour ajouter beaucoup plus, il faudra passer à une table avec un programme plus grand, ce qui demande un flash par USB.
 
 ## Suite
 

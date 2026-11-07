@@ -63,6 +63,7 @@ static BME680Sensor envSensor;
 static DataStore store;
 static LedStrip leds;
 static aircolor::PmAverage pm25Avg, pm10Avg;
+static aircolor::Median3 pm25Med, pm10Med;
 static WifiManager wifi;
 static SemaphoreHandle_t serialMutex;
 // Plage du MH-Z19B : accusé de réception de 0x99 et relecture par 0x9B
@@ -507,17 +508,19 @@ static void processLine(const String& line) {
 }
 
 // Position de qualité de l'air (0 à 4) pour la bande LED, avec les mêmes
-// mesures que la note de l'appli : particules moyennées, CO2 moyen hors
-// préchauffage, humidité.
+// mesures que la note de l'appli : particules moyennées (sans le démarrage,
+// les pics isolés ni l'air trop humide), CO2 moyen hors préchauffage, humidité.
 static void updateLeds(const Sample& s) {
   const uint32_t now = millis();
-  if (s.pmFresh) {
-    pm25Avg.add(s.pm25, now);
-    pm10Avg.add(s.pm10, now);
+  const float rh = s.envOk ? s.rh : NAN;
+  const bool humid = !isnan(rh) && rh >= PM_RH_MAX;
+  if (s.pmFresh && s.uptimeS >= PM_SETTLE_S && !humid) {
+    pm25Avg.add(pm25Med.add(s.pm25), now);
+    pm10Avg.add(pm10Med.add(s.pm10), now);
   }
   const float co2 = (s.co2Ok && !s.co2Warm) ? s.co2Avg : NAN;
-  const float rh = s.envOk ? s.rh : NAN;
-  leds.setTarget(aircolor::worst(pm25Avg.value(now), pm10Avg.value(now), co2, rh));
+  const float pm25 = humid ? NAN : pm25Avg.value(now), pm10 = humid ? NAN : pm10Avg.value(now);
+  leds.setTarget(aircolor::worst(pm25, pm10, co2, rh));
 }
 
 static void commsTask(void*) {

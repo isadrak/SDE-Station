@@ -94,4 +94,25 @@ class PmAverage {
   uint32_t lastMs_ = 0;
 };
 
+// Médiane des 3 dernières mesures de particules : un pic isolé (une seule
+// mesure haute) n'atteint pas la bande. L'appli fait plus fin (filtre de
+// Hampel sur 7 mesures) ; ici la mémoire et la simplicité priment.
+class Median3 {
+ public:
+  float add(float v) {
+    if (isnan(v)) return NAN;
+    v_[i_] = v;
+    i_ = (i_ + 1) % 3;
+    if (n_ < 3) n_++;
+    if (n_ == 1) return v;
+    if (n_ == 2) return v_[0] < v_[1] ? v_[0] : v_[1];  // 2 mesures : la plus basse
+    float a = v_[0], b = v_[1], c = v_[2];
+    return fmaxf(fminf(a, b), fminf(fmaxf(a, b), c));
+  }
+
+ private:
+  float v_[3] = {NAN, NAN, NAN};
+  uint8_t i_ = 0, n_ = 0;
+};
+
 }  // namespace aircolor

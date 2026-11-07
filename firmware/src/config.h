@@ -58,6 +58,12 @@
 #define PM_CYCLE_S_MAX 3600
 #define PM_WARMUP_MS 30000
 #define PM_MEASURE_MS 10000
+// Mesures de particules laissées hors de la note et de la bande LED (comme
+// l'appli) : les 10 premières minutes après le démarrage (poussière soulevée
+// dans la chambre du capteur, station tout juste manipulée) et l'air à 75 %
+// d'humidité ou plus (le SDS011 surestime fortement).
+#define PM_SETTLE_S 600
+#define PM_RH_MAX 75.0f
 
 // Wi-Fi : point d'accès « SDE-XXXX » toujours actif + Wi-Fi de la maison
 // optionnel (configuré depuis l'appli, gardé en mémoire).

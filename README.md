@@ -32,7 +32,7 @@ C'est un projet personnel que j'ai mené seul, de la carte au boîtier :
 
 **Mesure et analyse**
 - Trois capteurs : MH-Z19B (CO2, NDIR), SDS011 (particules, laser), BME680 (T, HR, pression, COV).
-- Note globale = la plus basse des notes par mesure (règle de l'AQI), sans pondération maison. Particules notées par le NowCast de l'EPA.
+- Note globale = la plus basse des notes par mesure (règle de l'AQI), sans pondération maison. Particules notées par le NowCast de l'EPA. Les mesures de démarrage, les pics isolés (filtre de Hampel) et les mesures à 75 % d'humidité ou plus sont écartées de la note.
 - Conseils calculés sur 24 h minute par minute et 7 jours : détection automatique des aérations (renouvellements d'air par heure), confinement nocturne, air sec, pics de cuisson, point de rosée, chute de pression…
 - Courbes 1 h / 24 h / 7 j / 30 j colorées en dégradé selon la zone de la norme, lissage médian + gaussien adapté à chaque capteur.
 
