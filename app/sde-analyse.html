@@ -227,8 +227,8 @@ input[type=range] { width: 100%; accent-color: var(--accent); min-height: 28px; 
 .recs-foot { display: flex; justify-content: flex-end; margin-top: 6px; }
 
 /* ================================================================ Mesures */
-.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; position: sticky; top: 68px; z-index: 5; }
-.toolbar .seg { box-shadow: var(--shadow); background: color-mix(in srgb, var(--surface-2) 92%, transparent); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.toolbar { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; position: sticky; top: calc(60px + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 8px 0; margin: -8px 0; }
+.toolbar .seg { box-shadow: var(--shadow); background: var(--surface-2); }
 .toolbar label { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; }
 .measures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .mblock { --tone: var(--g0); padding: 18px 20px 12px; display: flex; flex-direction: column; gap: 4px; }
@@ -407,7 +407,7 @@ tbody tr:last-child td { border-bottom: 0; }
   .tile { padding: 14px 14px 50px; min-height: 164px; }
   .tile .state { font-size: var(--fs-md); }
   .card-pad { padding: 18px; }
-  .toolbar { top: 64px; }
+  .toolbar { top: calc(56px + env(safe-area-inset-top)); }
   .toolbar .seg { width: 100%; }
   .toolbar .seg button { flex: 1; padding: 9px 0; }
   .btn { min-height: 44px; }
@@ -1976,7 +1976,7 @@ function buildCharts() {
     const unitShort = c.unit === "/100" ? "sur 100" : c.unit;
     const chart = new Chart(cv, {
       type: "line",
-      data: { datasets: c.series.map((s, i) => ({ label: s.label, data: [], borderWidth: 2.2, pointRadius: c.sparse ? 4 : 0, pointHoverRadius: 6, pointBorderWidth: 1, pointBackgroundColor: ctx => ctx.dataset.borderColor, pointHoverBackgroundColor: ctx => ctx.dataset.borderColor, pointBorderColor: () => css("--surface-1"), tension: 0.3, cubicInterpolationMode: "monotone", spanGaps: false, _slot: i + 1, _color: s.color })) },
+      data: { datasets: c.series.map((s, i) => ({ label: s.label, data: [], borderWidth: 2.2, pointRadius: 0, pointHoverRadius: 6, pointBorderWidth: 1, pointBackgroundColor: ctx => ctx.dataset.borderColor, pointHoverBackgroundColor: ctx => ctx.dataset.borderColor, pointBorderColor: () => css("--surface-1"), tension: 0.3, cubicInterpolationMode: "monotone", spanGaps: false, _slot: i + 1, _color: s.color })) },
       options: {
         locale: "fr-CA", animation: false, parsing: false, normalized: true, responsive: true, maintainAspectRatio: false,
         interaction: { mode: "index", intersect: false, axis: "x" },
@@ -2090,7 +2090,8 @@ function downsample(rows, key, sparse) {
   const segs = [];
   let seg = [], prevT = null, prevHist = false;
   for (const r of rows) {
-    const gap = r.hist || prevHist ? Math.max(180000, 2.5 * (r.step || 60000)) : (sparse ? 3 * (sensors.pmcycle || 300) * 1000 : 30000);
+    // Particules : une mesure par cycle (5 min par défaut), en direct comme dans l'historique.
+    const gap = sparse ? Math.max(3 * (sensors.pmcycle || 300) * 1000, 2.5 * (r.step || 60000)) : r.hist || prevHist ? Math.max(180000, 2.5 * (r.step || 60000)) : 30000;
     if (prevT != null && r.t - prevT > gap) { segs.push(seg); seg = []; }
     seg.push({ x: r.t, y: r[key] });
     prevT = r.t; prevHist = !!r.hist;
@@ -2159,7 +2160,8 @@ function renderBlock({ chart, cfg, note, el: card }, rows) {
     const ds = chart.data.datasets[i];
     ds.data = pts;
     ds.hidden = !shown;
-    ds.pointRadius = cfg.sparse && rangeSec <= 86400 ? 4 : 0;
+    // Particules : la courbe suffit ; un point seulement pour une mesure isolée (entre deux trous).
+    ds.pointRadius = cfg.sparse && rangeSec <= 86400 ? ctx => { const d = ctx.dataset.data, i = ctx.dataIndex; return d[i - 1]?.y == null && d[i + 1]?.y == null ? 3 : 0; } : 0;
   });
   fitAxis(chart, cfg.id, all);
   if (rows.length) {
