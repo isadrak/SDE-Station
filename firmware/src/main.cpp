@@ -549,27 +549,27 @@ static void updateLeds(const Sample& s) {
   const float co2 = (s.co2Ok && !s.co2Warm) ? s.co2Avg : NAN;
   // Aération (même règle que l'appli, airingNow) : le CO2 a perdu au moins
   // 100 ppm depuis son pic des 40 dernières minutes (pic d'au moins 700 ppm),
-  // à 10 ppm/min ou plus. Tant que ça dure, une vague toutes les 20 s.
+  // à 10 ppm/min ou plus. Tant que ça dure, la vague tourne en continu.
   static float co2Min[40];  // une valeur par minute, [0] = la plus récente
-  static uint32_t co2LastMin = 0, waveAt = 0;
+  static uint32_t co2LastMin = 0;
   if (!co2LastMin) for (float& x : co2Min) x = NAN;
   if (!isnan(co2) && (!co2LastMin || now - co2LastMin >= 60000)) {
     co2LastMin = now;
     memmove(co2Min + 1, co2Min, sizeof(co2Min) - sizeof(float));
     co2Min[0] = co2;
   }
-  if (!isnan(co2) && now - waveAt > 20000) {
+  bool airing = leds.airing();  // sans mesure de CO2, on garde l'état
+  if (!isnan(co2)) {
     float peak = NAN;
     int age = 1;
     for (int k = 0; k < 40; k++)
       if (!isnan(co2Min[k]) && (isnan(peak) || co2Min[k] > peak)) peak = co2Min[k], age = k < 1 ? 1 : k;
     const float drop = peak - co2;
-    if (peak >= 700 && drop >= 100 && drop / age >= 10) {
-      if (!waveAt || now - waveAt > 10UL * 60000) elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
-      waveAt = now;
-      leds.fxWave();
-    }
+    airing = peak >= 700 && drop >= 100 && drop / age >= (leds.airing() ? 8 : 10);  // marge pour ne pas clignoter
+    if (airing && !leds.airing()) elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
+    if (!airing && leds.airing()) elog::add("aeration terminee : CO2 %.0f ppm", co2);
   }
+  leds.setAiring(airing);
   leds.setPmActive(s.pmState == 2 || s.pmState == 3);  // préchauffage ou mesure du SDS011
   const float pm25 = humid ? NAN : pm25Avg.value(now), pm10 = humid ? NAN : pm10Avg.value(now);
   leds.setTarget(aircolor::worst(pm25, pm10, co2, rh));

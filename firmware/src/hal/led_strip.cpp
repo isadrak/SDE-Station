@@ -237,11 +237,11 @@ void LedStrip::tick() {
       for (uint16_t i = 0; i < n; i++) px[i] = mix(sweepOld_, base, (edge - i) / 3);
       fx = true;
     }
-    if (waveStart_ && now - waveStart_ < 3500) {
-      // Aération : vague bleu-vert, deux passages
-      const float t = (now - waveStart_) / 3500.0f;
-      const float c = fmodf(t * 2, 1) * (n + 10) - 5;
-      const uint32_t air = Adafruit_NeoPixel::gamma32(rgb(0, vf, vf * 3 / 4));
+    if (airing_) {
+      // Aération en cours : vague bleu-vert qui traverse la bande en boucle
+      const float t = (now - waveStart_) / 1750.0f;
+      const float c = fmodf(t, 1) * (n + 10) - 5;
+      const uint32_t air = Adafruit_NeoPixel::gamma32(rgb(0, vf / 2, vf));
       for (uint16_t i = 0; i < n; i++) px[i] = mix(px[i], air, bump(i, c, 5));
       fx = true;
     } else if (pmActive_) {

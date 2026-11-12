@@ -30,7 +30,12 @@ class LedStrip {
   void setCount(uint16_t n);
   // Animations : vague d'air frais (aération), clignotement « trouver la station »,
   // point qui glisse pendant une mesure des poussières.
-  void fxWave() { waveStart_ = millis(); }
+  // Aération en cours : une vague bleu-vert traverse la couleur actuelle en continu.
+  void setAiring(bool on) {
+    if (on && !airing_) waveStart_ = millis();
+    airing_ = on;
+  }
+  bool airing() const { return airing_; }
   void fxFind(uint32_t ms) { findUntil_ = millis() + ms; }
   void setPmActive(bool on) { pmActive_ = on; }
   // À appeler souvent (au moins 20 fois par seconde).
@@ -53,6 +58,7 @@ class LedStrip {
   uint32_t sweepStart_ = 0;    // changement de note : la nouvelle couleur se propage
   uint32_t sweepOld_ = 0;
   volatile uint32_t waveStart_ = 0;
+  volatile bool airing_ = false;
   volatile uint32_t findUntil_ = 0;
   volatile bool pmActive_ = false;
   bool fxShown_ = false;
