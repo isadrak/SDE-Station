@@ -40,13 +40,36 @@ void IRAM_ATTR toRmt(const void* src, rmt_item32_t* dest, size_t srcSize, size_t
   *items = i;
 }
 
+void send(uint16_t count) { rmt_write_sample(kChannel, grb, count * 3, true); }  // ~0,7 ms pour 22 LED
+
 void show(uint32_t color, uint16_t count) {
   for (uint16_t k = 0; k < count; k++) {
     grb[k * 3] = (color >> 8) & 0xFF;
     grb[k * 3 + 1] = (color >> 16) & 0xFF;
     grb[k * 3 + 2] = color & 0xFF;
   }
-  rmt_write_sample(kChannel, grb, count * 3, true);  // ~0,7 ms pour 22 LED
+  send(count);
+}
+
+uint32_t px[LED_COUNT_MAX];
+
+uint32_t rgb(uint32_t r, uint32_t g, uint32_t b) { return (r << 16) | (g << 8) | b; }
+// Mélange de a vers b, t de 0 à 1.
+uint32_t mix(uint32_t a, uint32_t b, float t) {
+  if (t <= 0) return a;
+  if (t >= 1) return b;
+  uint32_t out = 0;
+  for (int sh = 0; sh <= 16; sh += 8) {
+    float x = ((a >> sh) & 0xFF) * (1 - t) + ((b >> sh) & 0xFF) * t;
+    out |= (uint32_t)x << sh;
+  }
+  return out;
+}
+uint32_t scale(uint32_t c, float k) { return mix(0, c, k); }
+// Bosse douce centrée sur c, de demi-largeur w (en LED).
+float bump(float i, float c, float w) {
+  float d = fabsf(i - c) / w;
+  return d >= 1 ? 0 : 0.5f + 0.5f * cosf(d * PI);
 }
 }  // namespace
 
@@ -102,6 +125,24 @@ static bool isNight() {
   return lt.tm_hour >= 22 || lt.tm_hour < 7;
 }
 
+namespace ledfx {
+volatile float otaProgress = NAN;
+}
+
+// Couleur de fond : qualité de l'air, ou blanc qui respire sans verdict.
+uint32_t LedStrip::baseColor(uint32_t now, uint8_t v) const {
+  if (isnan(cur_)) {
+    float b = 0.15f + 0.10f * sinf(now / 1000.0f * 2 * PI / 4.0f);
+    uint8_t w = (uint8_t)(v * b);
+    return Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::Color(w, w, w));
+  }
+  // Au-delà de la note 2, pulsation lente pour attirer l'attention
+  float k = 1;
+  if (cur_ >= 3.5f) k = 0.7f + 0.3f * sinf(now / 1000.0f * 2 * PI / 3.0f);
+  uint16_t h = (uint16_t)(aircolor::hue(cur_) / 360.0f * 65535.0f);
+  return Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(h, 255, (uint8_t)(v * k)));
+}
+
 void LedStrip::tick() {
   if (!ready) return;
   const uint32_t now = millis();
@@ -113,50 +154,115 @@ void LedStrip::tick() {
     count_ = wantCount_;
     lastColor_ = 0xFFFFFFFF;
   }
+  const uint16_t n = count_;
   const float dt = (now - lastMs_) / 1000.0f;
   lastMs_ = now;
-
-  const float target = target_;
-  // Fondu : la position rejoint la cible avec une constante de temps de
-  // LED_FADE_S secondes (les mesures sont déjà moyennées).
-  if (isnan(target)) cur_ = NAN;
-  else if (isnan(cur_)) cur_ = target;
-  else cur_ += (target - cur_) * (1 - expf(-dt / LED_FADE_S));
 
   // Démarrage doux : la bande monte en 5 s, après 3 s, pour ne pas ajouter
   // son courant au pic du démarrage du Wi-Fi.
   const uint32_t up = now - startMs_;
   const float ramp = up < 3000 ? 0 : (up < 8000 ? (up - 3000) / 5000.0f : 1);
-  uint8_t v = (uint8_t)(pct_ * 255 / 100 * ramp);
-  uint32_t color;
-  if (pct_ == 0 || guard_ || (nightOff_ && isNight())) {
-    color = 0;
-  } else if (isnan(cur_)) {
-    // Pas encore de verdict : blanc doux qui respire
-    float b = 0.15f + 0.10f * sinf(now / 1000.0f * 2 * PI / 4.0f);
-    uint8_t w = (uint8_t)(v * b);
-    color = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::Color(w, w, w));
+  const bool off = pct_ == 0 || guard_ || (nightOff_ && isNight());
+  const uint8_t v = off ? 0 : (uint8_t)(pct_ * 255 / 100 * ramp);
+  // Luminosité des animations : celle réglée, au moins 15 %.
+  const uint8_t vf = (uint8_t)((pct_ < 15 ? 15 : pct_) * 255 / 100);
+
+  // Fondu : la position rejoint la cible avec une constante de temps de
+  // LED_FADE_S secondes (les mesures sont déjà moyennées). Quand la note
+  // change, la nouvelle couleur se propage d'un bout à l'autre de la bande.
+  const float target = target_;
+  if (isnan(target)) {
+    cur_ = NAN;
+    level_ = -1;
   } else {
-    // Au-delà de la note 2, pulsation lente pour attirer l'attention
-    float k = 1;
-    if (cur_ >= 3.5f) k = 0.7f + 0.3f * sinf(now / 1000.0f * 2 * PI / 3.0f);
-    uint16_t h = (uint16_t)(aircolor::hue(cur_) / 360.0f * 65535.0f);
-    color = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(h, 255, (uint8_t)(v * k)));
+    int8_t lvl = (int8_t)fminf(3, floorf(target));
+    bool clear = level_ < 0 || fabsf(target - (lvl > level_ ? lvl : level_)) > 0.1f;
+    if (lvl != level_ && clear) {
+      if (level_ >= 0 && v) {
+        sweepOld_ = baseColor(now, v);
+        sweepStart_ = now;
+      }
+      level_ = lvl;
+      cur_ = target;
+    } else if (isnan(cur_)) {
+      cur_ = target;
+    } else {
+      cur_ += (target - cur_) * (1 - expf(-dt / LED_FADE_S));
+    }
+  }
+
+  const uint32_t base = v ? baseColor(now, v) : 0;
+  for (uint16_t i = 0; i < n; i++) px[i] = base;
+  bool fx = false;
+
+  const float ota = ledfx::otaProgress;
+  if (!guard_ && !isnan(ota)) {
+    // Mise à jour : barre bleue qui se remplit, tête qui scintille
+    const float fill = ota * n;
+    const uint32_t blue = Adafruit_NeoPixel::gamma32(rgb(0, vf / 4, vf));
+    for (uint16_t i = 0; i < n; i++)
+      px[i] = i + 1 <= fill ? blue : (i < fill + 1 ? scale(blue, 0.3f + 0.7f * (fill - i)) : 0);
+    fx = true;
+  } else if (!guard_ && (int32_t)(findUntil_ - now) > 0) {
+    // Trouver la station : clignotement blanc / bleu
+    const bool ph = (now / 250) & 1;
+    const uint32_t c = Adafruit_NeoPixel::gamma32(ph ? rgb(vf, vf, vf) : rgb(0, vf / 3, vf));
+    for (uint16_t i = 0; i < n; i++) px[i] = (i & 1) == ph ? c : 0;
+    fx = true;
+  } else if (!off && up >= 300 && up < 3300) {
+    // Démarrage : comète arc-en-ciel avec une traîne de 6 LED
+    const float head = (up - 300) / 3000.0f * (n + 6);
+    for (uint16_t i = 0; i < n; i++) {
+      float d = head - i;
+      if (d >= 0 && d < 6) {
+        uint16_t h = (uint16_t)(i * 65535UL / n);
+        px[i] = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(h, 255, (uint8_t)(vf * (1 - d / 6))));
+      }
+    }
+    fx = true;
+  } else if (v) {
+    if (now - sweepStart_ < 1500 && sweepStart_) {
+      // Nouvelle note : la couleur avance d'un bout à l'autre
+      const float edge = (now - sweepStart_) / 1500.0f * (n + 3);
+      for (uint16_t i = 0; i < n; i++) px[i] = mix(sweepOld_, base, (edge - i) / 3);
+      fx = true;
+    }
+    if (waveStart_ && now - waveStart_ < 3500) {
+      // Aération : vague bleu-vert, deux passages
+      const float t = (now - waveStart_) / 3500.0f;
+      const float c = fmodf(t * 2, 1) * (n + 10) - 5;
+      const uint32_t air = Adafruit_NeoPixel::gamma32(rgb(0, vf, vf * 3 / 4));
+      for (uint16_t i = 0; i < n; i++) px[i] = mix(px[i], air, bump(i, c, 5));
+      fx = true;
+    } else if (pmActive_) {
+      // Mesure des poussières : un point plus clair glisse d'un bout à l'autre
+      const float t = fmodf(now / 4000.0f, 2);
+      const float c = (t < 1 ? t : 2 - t) * (n - 1);
+      const uint32_t hi = mix(base, rgb(v, v, v), 0.5f);
+      for (uint16_t i = 0; i < n; i++) px[i] = mix(px[i], hi, bump(i, c, 3));
+      fx = true;
+    }
   }
 
   // Limite de courant : environ 20 mA par canal à pleine valeur.
-  uint32_t r = (color >> 16) & 0xFF, g = (color >> 8) & 0xFF, b = color & 0xFF;
-  uint32_t ma = (r + g + b) * 20UL * count_ / 255UL;
-  if (ma > LED_MAX_MA) {
-    r = r * LED_MAX_MA / ma;
-    g = g * LED_MAX_MA / ma;
-    b = b * LED_MAX_MA / ma;
-    color = Adafruit_NeoPixel::Color(r, g, b);
+  uint32_t sum = 0;
+  for (uint16_t i = 0; i < n; i++) sum += ((px[i] >> 16) & 0xFF) + ((px[i] >> 8) & 0xFF) + (px[i] & 0xFF);
+  const uint32_t ma = sum * 20UL / 255UL;
+  if (ma > LED_MAX_MA)
+    for (uint16_t i = 0; i < n; i++) px[i] = scale(px[i], (float)LED_MAX_MA / ma);
+
+  // Sans animation : une image seulement si la couleur change (la bande la
+  // garde), et une fois toutes les 5 s au cas où un parasite l'aurait brouillée.
+  if (!fx) {
+    if (!fxShown_ && px[0] == lastColor_ && now - lastSent_ < 5000) return;
+    lastColor_ = n ? px[0] : 0;
   }
-  // Une image seulement si la couleur change (la bande la garde), et une
-  // fois toutes les 5 s au cas où un parasite l'aurait brouillée.
-  if (color == lastColor_ && now - lastSent_ < 5000) return;
-  lastColor_ = color;
+  fxShown_ = fx;
   lastSent_ = now;
-  show(color, count_);
+  for (uint16_t k = 0; k < n; k++) {
+    grb[k * 3] = (px[k] >> 8) & 0xFF;
+    grb[k * 3 + 1] = (px[k] >> 16) & 0xFF;
+    grb[k * 3 + 2] = px[k] & 0xFF;
+  }
+  send(n);
 }

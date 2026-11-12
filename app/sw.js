@@ -4,7 +4,7 @@
 // Les données (/api) ne sont jamais mises en cache.
 // Chemins relatifs au dossier du service worker : la même appli sert sur la
 // station (http://sde.local/) et en ligne (https://….github.io/sde/).
-const CACHE = 'sde-v17';
+const CACHE = 'sde-v18';
 const ROOT = self.registration.scope;   // finit par « / »
 const SHELL = ['', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'].map(p => new URL(p, ROOT).href);
 

@@ -430,7 +430,7 @@ void sampleToJson(const Sample& s, JsonObject doc) {
 
 // Commandes texte, une par ligne :
 //   info | interval <ms> | co2.zero | co2.abc on|off
-//   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.count <1-120> | led.night on|off
+//   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.count <1-120> | led.find | led.night on|off
 //   name <nom de la pièce>
 void runCommand(String line, JsonDocument& reply) {
   line.trim();
@@ -456,6 +456,10 @@ void runCommand(String line, JsonDocument& reply) {
   } else if (line == "pm.now") {
     c = {CmdType::PmNow, 0};
     setAck(reply, "pm.now", true, "Mesure des particules lancee (resultat dans ~40 s)");
+  } else if (line == "led.find") {
+    leds.fxFind(10000);
+    setAck(reply, "led.find", true, "La bande clignote pendant 10 s");
+    return;
   } else if (line.startsWith("led.count ")) {
     long n = line.substring(10).toInt();
     if (n < 1 || n > LED_COUNT_MAX) {
@@ -543,6 +547,27 @@ static void updateLeds(const Sample& s) {
     pm10Avg.add(pm10Med.add(s.pm10), now);
   }
   const float co2 = (s.co2Ok && !s.co2Warm) ? s.co2Avg : NAN;
+  // Aération (même règle que l'appli) : le CO2 baisse d'au moins 100 ppm sous
+  // le maximum des 10 dernières minutes, à 10 ppm/min ou plus sur 3 min.
+  static float co2Min[10];
+  static uint8_t co2Idx = 0;
+  static uint32_t co2LastMin = 0, waveAt = 0;
+  if (!co2LastMin) for (float& x : co2Min) x = NAN;
+  if (now - co2LastMin >= 60000) {
+    co2LastMin = now;
+    co2Idx = (co2Idx + 1) % 10;
+    co2Min[co2Idx] = co2;
+    float peak = NAN;
+    for (float x : co2Min)
+      if (!isnan(x) && (isnan(peak) || x > peak)) peak = x;
+    const float ago3 = co2Min[(co2Idx + 7) % 10];
+    if (!isnan(co2) && peak - co2 >= 100 && ago3 - co2 >= 30 && (!waveAt || now - waveAt > 15UL * 60000)) {
+      waveAt = now;
+      leds.fxWave();
+      elog::add("aeration detectee : CO2 %.0f ppm (max %.0f)", co2, peak);
+    }
+  }
+  leds.setPmActive(s.pmState == 2 || s.pmState == 3);  // préchauffage ou mesure du SDS011
   const float pm25 = humid ? NAN : pm25Avg.value(now), pm10 = humid ? NAN : pm10Avg.value(now);
   leds.setTarget(aircolor::worst(pm25, pm10, co2, rh));
 }

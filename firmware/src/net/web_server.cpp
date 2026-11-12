@@ -8,6 +8,7 @@
 
 #include "../app/watchdog.h"
 #include "../config.h"
+#include "../hal/led_strip.h"
 #include "../web/assets.h"
 #include "api.h"
 #include "cloud.h"
@@ -250,6 +251,7 @@ void handleUpdateUpload() {
       return;
     }
     if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) otaError = Update.errorString();
+    ledfx::otaProgress = 0;
     elog::add("mise a jour : envoi commence");
   } else if (up.status == UPLOAD_FILE_WRITE) {
     if (otaError.isEmpty() && Update.write(up.buf, up.currentSize) != up.currentSize) {
@@ -257,12 +259,16 @@ void handleUpdateUpload() {
       otaError = Update.errorString();
       Update.abort();
     }
+    // Barre de progression sur la bande (taille estimée = firmware actuel)
+    if (otaError.isEmpty()) ledfx::otaProgress = fminf(1, (up.totalSize + up.currentSize) / (float)ESP.getSketchSize());
   } else if (up.status == UPLOAD_FILE_END) {
     if (otaError.isEmpty() && !Update.end(true)) otaError = Update.errorString();
     elog::add("mise a jour : %s", otaError.isEmpty() ? "installee" : otaError.c_str());
+    ledfx::otaProgress = otaError.isEmpty() ? 1 : NAN;
   } else if (up.status == UPLOAD_FILE_ABORTED) {
     Update.abort();
     otaError = "Envoi interrompu";
+    ledfx::otaProgress = NAN;
   }
 }
 
@@ -282,6 +288,7 @@ void handleUpdateDone() {
   bool ok = otaError.isEmpty() && Update.isFinished();
   doc["ok"] = ok;
   doc["msg"] = ok ? "Mise a jour installee, redemarrage" : (otaError.length() ? otaError : String("Aucun fichier recu"));
+  if (!ok) ledfx::otaProgress = NAN;
   sendJson(doc, ok ? 200 : (otaError.startsWith("Mot de passe") ? 403 : 400));
   if (ok) {
     delay(500);

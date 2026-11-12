@@ -603,6 +603,10 @@ tbody tr:last-child td { border-bottom: 0; }
           <div class="setting col" id="ledGuardRow" hidden>
             <div class="txt"><b>Lumière coupée par sécurité</b><span>La station a redémarré plusieurs fois de suite par manque de courant avec la bande allumée. La bande reste éteinte pour que la station fonctionne. Vérifier le câblage et l'alimentation (chargeur d'au moins 2 A), puis bouger le curseur de luminosité pour la rallumer.</span></div>
           </div>
+          <div class="setting" id="ledFindRow" hidden>
+            <div class="txt"><b>Trouver la station</b><span>La bande clignote pendant 10 secondes</span></div>
+            <button class="btn" id="btnLedFind">Faire clignoter</button>
+          </div>
           <div class="setting col" id="ledCountRow" hidden>
             <div class="txt"><b>Nombre de LED</b><span>Le nombre de LED de la bande (60 par mètre)</span></div>
             <div class="row"><input type="number" id="ledCountIn" min="1" max="120" step="1" inputmode="numeric" aria-label="Nombre de LED de la bande"><button class="btn" id="btnLedCount">Enregistrer</button></div>
@@ -3497,7 +3501,9 @@ function renderDevice() {
   $("ledNight").checked = !!led?.night;
   $("ledNight").disabled = !ledOk || led.night == null;   // firmware < 0.7
   $("ledGuardRow").hidden = !(ledOk && led.guard);
-  $("ledCountRow").hidden = !led?.max;                       // firmware < 0.9.11
+  $("ledCountRow").hidden = !led?.max;
+  $("ledFindRow").hidden = !led?.max;
+  $("btnLedFind").disabled = !ledOk;                       // firmware < 0.9.11
   if (led?.max) {
     $("ledCountIn").max = led.max;
     if (document.activeElement !== $("ledCountIn")) $("ledCountIn").value = led.n ?? "";
@@ -4205,6 +4211,7 @@ $("roomIn").onkeydown = e => { if (e.key === "Enter") saveRoom($("roomIn").value
 $("ledRange").oninput = onLedInput;
 $("ledNight").onchange = e => setLedNight(e.target.checked);
 $("btnLedCount").onclick = saveLedCount;
+$("btnLedFind").onclick = () => sendCmd("led.find");
 $("ledCountIn").onkeydown = e => { if (e.key === "Enter") saveLedCount(); };
 $("themeSeg").onclick = e => { const b = e.target.closest("button"); if (b) setTheme(b.dataset.theme); };
 $("engSwitch").onchange = e => setEng(e.target.checked);
