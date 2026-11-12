@@ -30,7 +30,7 @@ class LedStrip {
   void setCount(uint16_t n);
   // Animations : vague d'air frais (aération), clignotement « trouver la station »,
   // point qui glisse pendant une mesure des poussières.
-  // Aération en cours : une vague bleu-vert traverse la couleur actuelle en continu.
+  // Aération en cours : une houle bleue lente traverse la couleur actuelle en continu.
   void setAiring(bool on) {
     if (on && !airing_) waveStart_ = millis();
     airing_ = on;
@@ -59,6 +59,7 @@ class LedStrip {
   uint32_t sweepOld_ = 0;
   volatile uint32_t waveStart_ = 0;
   volatile bool airing_ = false;
+  float airK_ = 0;             // intensité de la vague (fondu d'entrée et de sortie)
   volatile uint32_t findUntil_ = 0;
   volatile bool pmActive_ = false;
   bool fxShown_ = false;

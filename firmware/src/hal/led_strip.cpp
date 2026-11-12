@@ -237,12 +237,18 @@ void LedStrip::tick() {
       for (uint16_t i = 0; i < n; i++) px[i] = mix(sweepOld_, base, (edge - i) / 3);
       fx = true;
     }
-    if (airing_) {
-      // Aération en cours : vague bleu-vert qui traverse la bande en boucle
-      const float t = (now - waveStart_) / 1750.0f;
-      const float c = fmodf(t, 1) * (n + 10) - 5;
+    // Fondu de 3 s à l'entrée et à la sortie de l'aération
+    airK_ = airing_ ? fminf(1, airK_ + dt / 3) : fmaxf(0, airK_ - dt / 3);
+    if (airK_ > 0) {
+      // Aération : houle bleue lente et large, une respiration toutes les 6 s
+      // sur chaque LED, qui avance doucement le long de la bande.
+      const float t = (now - waveStart_) / 6000.0f;
       const uint32_t air = Adafruit_NeoPixel::gamma32(rgb(0, vf / 2, vf));
-      for (uint16_t i = 0; i < n; i++) px[i] = mix(px[i], air, bump(i, c, 5));
+      const float k = airK_ * airK_ * (3 - 2 * airK_) * 0.75f;
+      for (uint16_t i = 0; i < n; i++) {
+        const float w = 0.5f - 0.5f * cosf(2 * PI * ((float)i / (n * 1.5f) - t));
+        px[i] = mix(px[i], air, k * w * w * (3 - 2 * w));
+      }
       fx = true;
     } else if (pmActive_) {
       // Mesure des poussières : un point plus clair glisse d'un bout à l'autre
