@@ -191,6 +191,19 @@ static int crashStreak() {
   return n;
 }
 
+// Nombre de chutes de tension (brownout) d'affilée en tête du journal.
+static int brownoutStreak() {
+  int n = 0, start = 0;
+  while (start < (int)bootRecent.length()) {
+    int end = bootRecent.indexOf(',', start);
+    if (end < 0) end = bootRecent.length();
+    if (bootRecent.substring(start, bootRecent.indexOf('@', start)) != "brownout") break;
+    n++;
+    start = end + 1;
+  }
+  return n;
+}
+
 static void setCo2Abc(bool on) {
   co2Sensor.setAutoCalibration(on);
   co2AbcOn = on;
@@ -327,6 +340,7 @@ void buildInfo(JsonDocument& doc) {
   led["pin"] = PIN_LED;
   led["n"] = leds.count();
   led["max"] = LED_COUNT_MAX;
+  led["guard"] = leds.guarded();
   led["b"] = leds.brightness();
   led["night"] = leds.nightOff();
   if (!isnan(leds.position())) led["pos"] = round1(leds.position());
@@ -596,6 +610,10 @@ void setup() {
   pmCycle.begin(PM_CYCLE_S_DEFAULT);
   envSensor.begin(PIN_I2C_SDA, PIN_I2C_SCL);
   leds.begin(PIN_LED, LED_COUNT);
+  // Protection : après 2 chutes de tension d'affilée, la bande reste éteinte
+  // jusqu'au prochain réglage de luminosité ou débranchement.
+  const bool ledGuard = brownoutStreak() >= LED_GUARD_BROWNOUTS;
+  if (ledGuard) leds.setGuard(true);
 
   sampleQueue = xQueueCreate(10, sizeof(Sample));
   cmdQueue = xQueueCreate(8, sizeof(Command));
@@ -605,6 +623,7 @@ void setup() {
   elog::begin();
   elog::add("demarrage n %u : %s, firmware %s, tas %u ko", (unsigned)bootCount, bootReason, SDE_FW_VERSION,
             esp_get_free_heap_size() / 1024);
+  if (ledGuard) elog::add("bande LED coupee : %d chutes de tension d'affilee", brownoutStreak());
   if (bootWdt.length()) elog::add("watchdog : %s", bootWdt.c_str());
   if (bootCrash.length() && strcmp(bootReason, "power_on") && strcmp(bootReason, "restart") && strcmp(bootReason, "brownout"))
     elog::add("plantage : %s", bootCrash.c_str());

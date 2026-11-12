@@ -81,6 +81,7 @@ void LedStrip::setTarget(float pos) { target_ = pos; }
 void LedStrip::setBrightness(uint8_t pct) {
   if (pct > 100) pct = 100;
   pct_ = pct;
+  guard_ = false;
   prefs.begin("sde", false);
   prefs.putUChar("led_b", pct);
   prefs.end();
@@ -128,7 +129,7 @@ void LedStrip::tick() {
   const float ramp = up < 3000 ? 0 : (up < 8000 ? (up - 3000) / 5000.0f : 1);
   uint8_t v = (uint8_t)(pct_ * 255 / 100 * ramp);
   uint32_t color;
-  if (pct_ == 0 || (nightOff_ && isNight())) {
+  if (pct_ == 0 || guard_ || (nightOff_ && isNight())) {
     color = 0;
   } else if (isnan(cur_)) {
     // Pas encore de verdict : blanc doux qui respire

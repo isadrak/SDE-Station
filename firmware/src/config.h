@@ -23,7 +23,8 @@
 #define LED_COUNT 22                // par défaut : 60 LED/m, ~37 cm en U autour du socle
 #define LED_COUNT_MAX 120           // maximum réglable par la commande « led.count <n> »
 #define LED_BRIGHTNESS_DEFAULT 40   // %, réglable par la commande « led <0-100> »
-#define LED_MAX_MA 600              // plafond de courant de la bande
+#define LED_MAX_MA 300              // plafond de courant de la bande
+#define LED_GUARD_BROWNOUTS 2       // bande coupée après ce nombre de chutes de tension d'affilée
 #define LED_FADE_S 8.0f             // constante de temps du fondu de couleur
 
 // Liaison PC (USB)

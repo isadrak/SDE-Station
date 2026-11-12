@@ -15,6 +15,9 @@ class LedStrip {
   // Mode nuit : bande éteinte de 22 h à 7 h (heure locale, si connue). Gardé en mémoire.
   void setNightOff(bool on);
   bool nightOff() const { return nightOff_; }
+  // Protection après des chutes de tension : bande forcée éteinte, levée par setBrightness.
+  void setGuard(bool on) { guard_ = on; }
+  bool guarded() const { return guard_; }
   float position() const { return cur_; }
   uint16_t count() const { return count_; }
   // Nombre de LED de la bande (1 à LED_COUNT_MAX). Gardé en mémoire.
@@ -26,6 +29,7 @@ class LedStrip {
   uint16_t count_ = 0;
   volatile uint8_t pct_ = 0;
   volatile bool nightOff_ = false;
+  volatile bool guard_ = false;
   volatile float target_ = NAN;
   float cur_ = NAN;
   volatile uint16_t wantCount_ = 0;
