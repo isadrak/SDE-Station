@@ -20,7 +20,8 @@
 // Fil de données via une résistance de 330 ohms, idéalement à travers un
 // 74AHCT1G125 (3,3 V -> 5 V) sur la carte V2.
 #define PIN_LED 18
-#define LED_COUNT 22                // 60 LED/m, ~37 cm en U autour du socle
+#define LED_COUNT 22                // par défaut : 60 LED/m, ~37 cm en U autour du socle
+#define LED_COUNT_MAX 120           // maximum réglable par la commande « led.count <n> »
 #define LED_BRIGHTNESS_DEFAULT 40   // %, réglable par la commande « led <0-100> »
 #define LED_MAX_MA 600              // plafond de courant de la bande
 #define LED_FADE_S 8.0f             // constante de temps du fondu de couleur

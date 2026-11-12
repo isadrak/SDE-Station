@@ -17,6 +17,8 @@ class LedStrip {
   bool nightOff() const { return nightOff_; }
   float position() const { return cur_; }
   uint16_t count() const { return count_; }
+  // Nombre de LED de la bande (1 à LED_COUNT_MAX). Gardé en mémoire.
+  void setCount(uint16_t n);
   // À appeler souvent (au moins 20 fois par seconde).
   void tick();
 
@@ -26,7 +28,9 @@ class LedStrip {
   volatile bool nightOff_ = false;
   volatile float target_ = NAN;
   float cur_ = NAN;
+  volatile uint16_t wantCount_ = 0;
   uint32_t lastMs_ = 0;
+  uint32_t startMs_ = 0;
   uint32_t lastShow_ = 0;
   uint32_t lastSent_ = 0;
   uint32_t lastColor_ = 0xFFFFFFFF;

@@ -107,7 +107,7 @@ main { max-width: 1120px; margin: 0 auto; padding: 24px 24px calc(32px + var(--n
 .seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px; background: var(--surface-2); }
 .seg button { border: 0; background: none; padding: 7px 14px; border-radius: 8px; cursor: pointer; color: var(--text-secondary); font-weight: 550; }
 .seg button[aria-pressed="true"] { background: var(--surface-1); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
-input[type=text], input[type=password], select { border: 1px solid var(--border); background: var(--surface-1); border-radius: var(--r-sm); padding: 8px 12px; min-height: 38px; min-width: 0; }
+input[type=text], input[type=password], input[type=number], select { border: 1px solid var(--border); background: var(--surface-1); border-radius: var(--r-sm); padding: 8px 12px; min-height: 38px; min-width: 0; }
 input:focus-visible, select:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Interrupteur */
 .switch { position: relative; width: 46px; height: 28px; flex: none; }
@@ -599,6 +599,10 @@ tbody tr:last-child td { border-bottom: 0; }
           <div class="setting">
             <div class="txt"><b>Éteinte la nuit</b><span>De 22 h à 7 h</span></div>
             <label class="switch"><input type="checkbox" id="ledNight" aria-label="Éteindre la lumière la nuit"><span></span></label>
+          </div>
+          <div class="setting col" id="ledCountRow" hidden>
+            <div class="txt"><b>Nombre de LED</b><span>Le nombre de LED de la bande (60 par mètre)</span></div>
+            <div class="row"><input type="number" id="ledCountIn" min="1" max="120" step="1" inputmode="numeric" aria-label="Nombre de LED de la bande"><button class="btn" id="btnLedCount">Enregistrer</button></div>
           </div>
         </div>
       </div>
@@ -3440,6 +3444,14 @@ function onLedInput() {
     ledPending = false;
   }, 350);
 }
+async function saveLedCount() {
+  const max = lastInfo?.led?.max || 120;
+  const n = Math.round(Number($("ledCountIn").value));
+  if (!(n >= 1 && n <= max)) { $("ledCountIn").value = lastInfo?.led?.n ?? ""; return; }
+  await sendCmd(`led.count ${n}`);
+  if (lastInfo?.led) lastInfo.led.n = n;
+  setTimeout(refreshInfo, 600);
+}
 async function setLedNight(on) {
   await sendCmd(`led.night ${on ? "on" : "off"}`);
   if (lastInfo?.led) lastInfo.led.night = on;
@@ -3480,6 +3492,12 @@ function renderDevice() {
   $("ledRange").disabled = !ledOk;
   $("ledNight").checked = !!led?.night;
   $("ledNight").disabled = !ledOk || led.night == null;   // firmware < 0.7
+  $("ledCountRow").hidden = !led?.max;                       // firmware < 0.9.11
+  if (led?.max) {
+    $("ledCountIn").max = led.max;
+    if (document.activeElement !== $("ledCountIn")) $("ledCountIn").value = led.n ?? "";
+  }
+  for (const el of [$("ledCountIn"), $("btnLedCount")]) el.disabled = !ledOk;
 
   // Apparence
   const th = store.get("sde.theme") || "";
@@ -4181,6 +4199,8 @@ $("btnRoom").onclick = () => saveRoom($("roomIn").value);
 $("roomIn").onkeydown = e => { if (e.key === "Enter") saveRoom($("roomIn").value); };
 $("ledRange").oninput = onLedInput;
 $("ledNight").onchange = e => setLedNight(e.target.checked);
+$("btnLedCount").onclick = saveLedCount;
+$("ledCountIn").onkeydown = e => { if (e.key === "Enter") saveLedCount(); };
 $("themeSeg").onclick = e => { const b = e.target.closest("button"); if (b) setTheme(b.dataset.theme); };
 $("engSwitch").onchange = e => setEng(e.target.checked);
 $("btnScan").onclick = scanWifi;

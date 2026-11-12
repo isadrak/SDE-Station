@@ -17,7 +17,7 @@ constexpr rmt_channel_t kChannel = RMT_CHANNEL_0;
 // Horloge RMT 80 MHz / 2 = 25 ns. WS2812B : 0 = 0,4 µs haut + 0,85 µs bas,
 // 1 = 0,8 µs haut + 0,45 µs bas.
 constexpr uint16_t kT0H = 16, kT0L = 34, kT1H = 32, kT1L = 18;
-uint8_t grb[LED_COUNT * 3];
+uint8_t grb[LED_COUNT_MAX * 3];
 bool ready = false;
 Preferences prefs;
 
@@ -51,17 +51,29 @@ void show(uint32_t color, uint16_t count) {
 }  // namespace
 
 void LedStrip::begin(uint8_t pin, uint16_t count) {
-  count_ = count > LED_COUNT ? LED_COUNT : count;
   rmt_config_t c = RMT_DEFAULT_CONFIG_TX((gpio_num_t)pin, kChannel);
   c.clk_div = 2;
   ready = rmt_config(&c) == ESP_OK && rmt_driver_install(kChannel, 0, 0) == ESP_OK &&
           rmt_translator_init(kChannel, toRmt) == ESP_OK;
-  if (ready) show(0, count_);
   prefs.begin("sde", true);
+  count = prefs.getUChar("led_c", count);
   pct_ = prefs.getUChar("led_b", LED_BRIGHTNESS_DEFAULT);
   nightOff_ = prefs.getBool("led_n", false);
   prefs.end();
+  count_ = count < 1 ? 1 : (count > LED_COUNT_MAX ? LED_COUNT_MAX : count);
+  wantCount_ = count_;
+  if (ready) show(0, LED_COUNT_MAX);  // éteint aussi les LED au-delà du nombre réglé
   lastMs_ = millis();
+  startMs_ = lastMs_;
+}
+
+void LedStrip::setCount(uint16_t n) {
+  if (n < 1) n = 1;
+  if (n > LED_COUNT_MAX) n = LED_COUNT_MAX;
+  wantCount_ = n;
+  prefs.begin("sde", false);
+  prefs.putUChar("led_c", (uint8_t)n);
+  prefs.end();
 }
 
 void LedStrip::setTarget(float pos) { target_ = pos; }
@@ -94,6 +106,12 @@ void LedStrip::tick() {
   const uint32_t now = millis();
   if (now - lastShow_ < 30) return;  // ~33 images/s
   lastShow_ = now;
+  if (wantCount_ != count_) {
+    // Nouveau nombre de LED : tout éteindre, puis renvoyer la couleur.
+    show(0, LED_COUNT_MAX);
+    count_ = wantCount_;
+    lastColor_ = 0xFFFFFFFF;
+  }
   const float dt = (now - lastMs_) / 1000.0f;
   lastMs_ = now;
 
@@ -104,7 +122,11 @@ void LedStrip::tick() {
   else if (isnan(cur_)) cur_ = target;
   else cur_ += (target - cur_) * (1 - expf(-dt / LED_FADE_S));
 
-  uint8_t v = (uint8_t)(pct_ * 255 / 100);
+  // Démarrage doux : la bande monte en 5 s, après 3 s, pour ne pas ajouter
+  // son courant au pic du démarrage du Wi-Fi.
+  const uint32_t up = now - startMs_;
+  const float ramp = up < 3000 ? 0 : (up < 8000 ? (up - 3000) / 5000.0f : 1);
+  uint8_t v = (uint8_t)(pct_ * 255 / 100 * ramp);
   uint32_t color;
   if (pct_ == 0 || (nightOff_ && isNight())) {
     color = 0;

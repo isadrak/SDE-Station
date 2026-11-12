@@ -195,7 +195,7 @@ La station garde la cause de ses 7 derniers démarrages. L'appli affiche un band
 - L'historique en LittleFS : un fichier par tranche de 1440 minutes dans `/h/`, écrit seulement en ajout, le plus ancien supprimé au-delà de 30.
 - Une moyenne mobile sur 10 échantillons, plus le calcul du point de rosée (Magnus) et de l'humidité absolue.
 - Une sortie JSON, une ligne par mesure sur l'USB à 115200 bauds.
-- Commandes texte (une par ligne sur l'USB, ou par `POST /api/cmd`) : `info`, `interval <ms>`, `co2.zero`, `co2.abc on|off`, `pm.cycle <s>` (0 = continu, sinon 60 à 3600), `pm.now`, `led <0-100>` (luminosité de la bande LED, 0 = éteinte), `led.night on|off` (bande éteinte de 22 h à 7 h, selon l'heure de la station), `name <texte>` (nom de la pièce, 40 caractères au plus ; `name` seul l'efface), `wifi.set <ssid>|<mot de passe>`, `wifi.forget`
+- Commandes texte (une par ligne sur l'USB, ou par `POST /api/cmd`) : `info`, `interval <ms>`, `co2.zero`, `co2.abc on|off`, `pm.cycle <s>` (0 = continu, sinon 60 à 3600), `pm.now`, `led <0-100>` (luminosité de la bande LED, 0 = éteinte), `led.count <1-120>` (nombre de LED de la bande, 22 par défaut), `led.night on|off` (bande éteinte de 22 h à 7 h, selon l'heure de la station), `name <texte>` (nom de la pièce, 40 caractères au plus ; `name` seul l'efface), `wifi.set <ssid>|<mot de passe>`, `wifi.forget`
 
 `ts` (heure UTC, en secondes) n'apparaît que lorsque la station connaît l'heure. Les valeurs `pm25` et `pm10` ne sont présentes que dans la ligne qui suit la fin d'un cycle de mesure du SDS011.
 

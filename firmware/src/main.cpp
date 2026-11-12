@@ -326,6 +326,7 @@ void buildInfo(JsonDocument& doc) {
   JsonObject led = doc["led"].to<JsonObject>();
   led["pin"] = PIN_LED;
   led["n"] = leds.count();
+  led["max"] = LED_COUNT_MAX;
   led["b"] = leds.brightness();
   led["night"] = leds.nightOff();
   if (!isnan(leds.position())) led["pos"] = round1(leds.position());
@@ -415,7 +416,7 @@ void sampleToJson(const Sample& s, JsonObject doc) {
 
 // Commandes texte, une par ligne :
 //   info | interval <ms> | co2.zero | co2.abc on|off
-//   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.night on|off
+//   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.count <1-120> | led.night on|off
 //   name <nom de la pièce>
 void runCommand(String line, JsonDocument& reply) {
   line.trim();
@@ -441,6 +442,15 @@ void runCommand(String line, JsonDocument& reply) {
   } else if (line == "pm.now") {
     c = {CmdType::PmNow, 0};
     setAck(reply, "pm.now", true, "Mesure des particules lancee (resultat dans ~40 s)");
+  } else if (line.startsWith("led.count ")) {
+    long n = line.substring(10).toInt();
+    if (n < 1 || n > LED_COUNT_MAX) {
+      setAck(reply, "led.count", false, "Valeur hors limites (1 a 120 LED)");
+      return;
+    }
+    leds.setCount((uint16_t)n);
+    setAck(reply, "led.count", true, "Nombre de LED modifie");
+    return;
   } else if (line.startsWith("led ")) {
     long pct = line.substring(4).toInt();
     if (pct < 0 || pct > 100 || (pct == 0 && line.substring(4) != "0")) {
