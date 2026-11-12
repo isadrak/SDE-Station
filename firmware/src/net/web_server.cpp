@@ -242,6 +242,7 @@ void handleTime() {
 
 // POST /api/update?pass=... (multipart, fichier « -ota.bin »)
 void handleUpdateUpload() {
+  static uint32_t otaSize = 1;
   HTTPUpload& up = server.upload();
   wdtPet(WDT_WEB);  // l'envoi complet peut durer plus que le watchdog
   if (up.status == UPLOAD_FILE_START) {
@@ -251,6 +252,11 @@ void handleUpdateUpload() {
       return;
     }
     if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) otaError = Update.errorString();
+    // Taille estimée de la barre = firmware actuel, lue une seule fois :
+    // ESP.getSketchSize() relit et vérifie tout le firmware en flash (~1,3 Mo).
+    // Appelée à chaque morceau reçu (0.9.13 à 0.9.17), elle rendait l'envoi
+    // si lent que la connexion finissait par tomber.
+    otaSize = ESP.getSketchSize();
     ledfx::otaProgress = 0;
     elog::add("mise a jour : envoi commence");
   } else if (up.status == UPLOAD_FILE_WRITE) {
@@ -260,7 +266,7 @@ void handleUpdateUpload() {
       Update.abort();
     }
     // Barre de progression sur la bande (taille estimée = firmware actuel)
-    if (otaError.isEmpty()) ledfx::otaProgress = fminf(1, (up.totalSize + up.currentSize) / (float)ESP.getSketchSize());
+    if (otaError.isEmpty()) ledfx::otaProgress = fminf(1, (up.totalSize + up.currentSize) / (float)otaSize);
   } else if (up.status == UPLOAD_FILE_END) {
     if (otaError.isEmpty() && !Update.end(true)) otaError = Update.errorString();
     elog::add("mise a jour : %s", otaError.isEmpty() ? "installee" : otaError.c_str());
