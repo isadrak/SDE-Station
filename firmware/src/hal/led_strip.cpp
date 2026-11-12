@@ -76,6 +76,10 @@ float bump(float i, float c, float w) {
 void LedStrip::begin(uint8_t pin, uint16_t count) {
   rmt_config_t c = RMT_DEFAULT_CONFIG_TX((gpio_num_t)pin, kChannel);
   c.clk_div = 2;
+  // Les 8 blocs mémoire du RMT (512 impulsions = 21 LED d'avance) : l'image
+  // part presque entière sans recharge par interruption, que le Wi-Fi peut
+  // retarder (bits faussés, bande brièvement bleue pendant les animations).
+  c.mem_block_num = 8;
   ready = rmt_config(&c) == ESP_OK && rmt_driver_install(kChannel, 0, 0) == ESP_OK &&
           rmt_translator_init(kChannel, toRmt) == ESP_OK;
   prefs.begin("sde", true);
@@ -158,10 +162,10 @@ void LedStrip::tick() {
   const float dt = (now - lastMs_) / 1000.0f;
   lastMs_ = now;
 
-  // Démarrage doux : la bande monte en 5 s, après 3 s, pour ne pas ajouter
-  // son courant au pic du démarrage du Wi-Fi.
+  // Démarrage doux : après l'animation d'accueil, la couleur de l'air monte
+  // en 2,7 s (rien de fort pendant le pic de courant du démarrage du Wi-Fi).
   const uint32_t up = now - startMs_;
-  const float ramp = up < 3000 ? 0 : (up < 8000 ? (up - 3000) / 5000.0f : 1);
+  const float ramp = up < 5300 ? 0 : (up < 8000 ? (up - 5300) / 2700.0f : 1);
   const bool off = pct_ == 0 || guard_ || (nightOff_ && isNight());
   const uint8_t v = off ? 0 : (uint8_t)(pct_ * 255 / 100 * ramp);
   // Luminosité des animations : celle réglée, au moins 15 %.
@@ -204,20 +208,22 @@ void LedStrip::tick() {
       px[i] = i + 1 <= fill ? blue : (i < fill + 1 ? scale(blue, 0.3f + 0.7f * (fill - i)) : 0);
     fx = true;
   } else if (!guard_ && (int32_t)(findUntil_ - now) > 0) {
-    // Trouver la station : clignotement blanc / bleu
-    const bool ph = (now / 250) & 1;
-    const uint32_t c = Adafruit_NeoPixel::gamma32(ph ? rgb(vf, vf, vf) : rgb(0, vf / 3, vf));
-    for (uint16_t i = 0; i < n; i++) px[i] = (i & 1) == ph ? c : 0;
+    // Trouver la station : pulsation douce blanc-bleu, une par seconde
+    const float k = 0.5f - 0.5f * cosf(now / 1000.0f * 2 * PI);
+    const uint32_t c = scale(Adafruit_NeoPixel::gamma32(rgb(vf * 3 / 4, vf * 3 / 4, vf)), k);
+    for (uint16_t i = 0; i < n; i++) px[i] = c;
     fx = true;
-  } else if (!off && up >= 300 && up < 3300) {
-    // Démarrage : comète arc-en-ciel avec une traîne de 6 LED
-    const float head = (up - 300) / 3000.0f * (n + 6);
+  } else if (!off && up >= 300 && up < 5300) {
+    // Démarrage : les couleurs de l'échelle de l'air (vert, jaune, orange,
+    // rouge) défilent lentement, avec une montée et une descente douces.
+    const float t = (up - 300) / 1000.0f;
+    const float env = fminf(1, fminf(t, 5 - t));
+    const uint8_t vb = (uint8_t)(pct_ * 255 / 100 * env);
     for (uint16_t i = 0; i < n; i++) {
-      float d = head - i;
-      if (d >= 0 && d < 6) {
-        uint16_t h = (uint16_t)(i * 65535UL / n);
-        px[i] = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(h, 255, (uint8_t)(vf * (1 - d / 6))));
-      }
+      float p = fmodf((float)i / n * 4 + t * 0.6f, 8);
+      if (p > 4) p = 8 - p;
+      uint16_t h = (uint16_t)(aircolor::hue(p) / 360.0f * 65535.0f);
+      px[i] = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(h, 255, vb));
     }
     fx = true;
   } else if (v) {

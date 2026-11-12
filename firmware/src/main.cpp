@@ -547,24 +547,27 @@ static void updateLeds(const Sample& s) {
     pm10Avg.add(pm10Med.add(s.pm10), now);
   }
   const float co2 = (s.co2Ok && !s.co2Warm) ? s.co2Avg : NAN;
-  // Aération (même règle que l'appli) : le CO2 baisse d'au moins 100 ppm sous
-  // le maximum des 10 dernières minutes, à 10 ppm/min ou plus sur 3 min.
-  static float co2Min[10];
-  static uint8_t co2Idx = 0;
+  // Aération (même règle que l'appli, airingNow) : le CO2 a perdu au moins
+  // 100 ppm depuis son pic des 40 dernières minutes (pic d'au moins 700 ppm),
+  // à 10 ppm/min ou plus. Tant que ça dure, une vague toutes les 20 s.
+  static float co2Min[40];  // une valeur par minute, [0] = la plus récente
   static uint32_t co2LastMin = 0, waveAt = 0;
   if (!co2LastMin) for (float& x : co2Min) x = NAN;
-  if (now - co2LastMin >= 60000) {
+  if (!isnan(co2) && (!co2LastMin || now - co2LastMin >= 60000)) {
     co2LastMin = now;
-    co2Idx = (co2Idx + 1) % 10;
-    co2Min[co2Idx] = co2;
+    memmove(co2Min + 1, co2Min, sizeof(co2Min) - sizeof(float));
+    co2Min[0] = co2;
+  }
+  if (!isnan(co2) && now - waveAt > 20000) {
     float peak = NAN;
-    for (float x : co2Min)
-      if (!isnan(x) && (isnan(peak) || x > peak)) peak = x;
-    const float ago3 = co2Min[(co2Idx + 7) % 10];
-    if (!isnan(co2) && peak - co2 >= 100 && ago3 - co2 >= 30 && (!waveAt || now - waveAt > 15UL * 60000)) {
+    int age = 1;
+    for (int k = 0; k < 40; k++)
+      if (!isnan(co2Min[k]) && (isnan(peak) || co2Min[k] > peak)) peak = co2Min[k], age = k < 1 ? 1 : k;
+    const float drop = peak - co2;
+    if (peak >= 700 && drop >= 100 && drop / age >= 10) {
+      if (!waveAt || now - waveAt > 10UL * 60000) elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
       waveAt = now;
       leds.fxWave();
-      elog::add("aeration detectee : CO2 %.0f ppm (max %.0f)", co2, peak);
     }
   }
   leds.setPmActive(s.pmState == 2 || s.pmState == 3);  // préchauffage ou mesure du SDS011
