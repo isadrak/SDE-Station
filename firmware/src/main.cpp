@@ -549,7 +549,9 @@ static void updateLeds(const Sample& s) {
   const float co2 = (s.co2Ok && !s.co2Warm) ? s.co2Avg : NAN;
   // Aération (même règle que l'appli, airingNow) : le CO2 a perdu au moins
   // 100 ppm depuis son pic des 40 dernières minutes (pic d'au moins 700 ppm),
-  // à 10 ppm/min ou plus. Tant que ça dure, la vague tourne en continu.
+  // à 10 ppm/min ou plus, et il baisse encore (au moins 9 ppm de moins qu'il
+  // y a 3 min). Tant que ça dure, la vague tourne en continu ; dès que la
+  // courbe redevient plate (fenêtre refermée), elle s'arrête.
   static float co2Min[40];  // une valeur par minute, [0] = la plus récente
   static uint32_t co2LastMin = 0;
   if (!co2LastMin) for (float& x : co2Min) x = NAN;
@@ -565,7 +567,8 @@ static void updateLeds(const Sample& s) {
     for (int k = 0; k < 40; k++)
       if (!isnan(co2Min[k]) && (isnan(peak) || co2Min[k] > peak)) peak = co2Min[k], age = k < 1 ? 1 : k;
     const float drop = peak - co2;
-    airing = peak >= 700 && drop >= 100 && drop / age >= (leds.airing() ? 8 : 10);  // marge pour ne pas clignoter
+    const bool falling = isnan(co2Min[3]) || co2Min[3] - co2 >= (leds.airing() ? 6 : 9);  // marge pour ne pas clignoter
+    airing = falling && peak >= 700 && drop >= 100 && drop / age >= (leds.airing() ? 8 : 10);
     if (airing && !leds.airing()) elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
     if (!airing && leds.airing()) elog::add("aeration terminee : CO2 %.0f ppm", co2);
   }
