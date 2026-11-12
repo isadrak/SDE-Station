@@ -208,7 +208,10 @@ void LedStrip::tick() {
     const uint16_t h = (uint16_t)(aircolor::hue(cur_) / 360.0f * 65535.0f);
     const uint32_t c = Adafruit_NeoPixel::ColorHSV(h, 255, v);
     float lin[3], err[3] = {0, 0, 0};
-    for (int k = 0; k < 3; k++) lin[k] = 255 * powf(((c >> (16 - 8 * k)) & 0xFF) / 255.0f, 2.6f);
+    for (int k = 0; k < 3; k++) {
+      const float x = ((c >> (16 - 8 * k)) & 0xFF) / 255.0f;
+      lin[k] = 255 * x * x * sqrtf(x);  // gamma 2,5 (powf coûtait 3 ko de flash)
+    }
     for (uint16_t i = 0; i < n; i++) {
       const float x = (float)i / n;
       const float m = 0.93f + 0.07f * (0.6f * sinf(2 * PI * (t / 13 + x * 0.7f)) + 0.4f * sinf(2 * PI * (t / 23 - x * 1.3f + 0.3f)));

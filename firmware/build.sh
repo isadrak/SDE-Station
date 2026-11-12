@@ -28,6 +28,10 @@ arduino-cli compile --fqbn $FQBN --output-dir build/out \
 
 mkdir -p dist
 cp build/out/sde.ino.bin dist/sde-firmware-$VER-ota.bin
+# La partition app0/app1 fait 1 310 720 octets : un fichier plus gros serait refusé par la mise à jour.
+SIZE=$(stat -c %s build/out/sde.ino.bin)
+if [ "$SIZE" -gt 1310720 ]; then echo "error: firmware trop gros ($SIZE > 1310720 octets)"; exit 1; fi
+echo "Firmware : $SIZE / 1310720 octets ($((1310720 - SIZE)) libres)"
 python3 -m esptool --chip esp32 merge_bin -o dist/sde-firmware-$VER-merged.bin \
   --flash_mode keep --flash_freq keep --flash_size keep \
   0x1000 build/out/sde.ino.bootloader.bin 0x8000 build/out/sde.ino.partitions.bin \
