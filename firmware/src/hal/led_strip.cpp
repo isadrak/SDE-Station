@@ -199,8 +199,8 @@ void LedStrip::tick() {
   for (uint16_t i = 0; i < n; i++) px[i] = base;
   bool fx = false;
   if (v && !isnan(cur_) && cur_ < 3.5f) {
-    // Lumière vivante : chaque LED respire très lentement (±7 % d'intensité),
-    // deux ondes de 13 s et 23 s qui se croisent sans jamais se répéter tout
+    // Lumière vivante : chaque LED respire lentement (de 50 à 100 % de son
+    // intensité), deux ondes de 9 s et 17 s qui se croisent sans jamais se répéter tout
     // à fait. À faible luminosité, une LED n'a que quelques niveaux : le calcul
     // se fait en lumière réelle (après gamma) et le reste est reporté sur la
     // LED voisine, pour que la lumière moyenne reste exacte et sans paliers.
@@ -214,7 +214,7 @@ void LedStrip::tick() {
     }
     for (uint16_t i = 0; i < n; i++) {
       const float x = (float)i / n;
-      const float m = 0.93f + 0.07f * (0.6f * sinf(2 * PI * (t / 13 + x * 0.7f)) + 0.4f * sinf(2 * PI * (t / 23 - x * 1.3f + 0.3f)));
+      const float m = 0.75f + 0.25f * (0.6f * sinf(2 * PI * (t / 9 + x * 0.7f)) + 0.4f * sinf(2 * PI * (t / 17 - x * 1.3f + 0.3f)));
       uint32_t o = 0;
       for (int k = 0; k < 3; k++) {
         const float want = lin[k] * m + err[k];
