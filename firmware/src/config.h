@@ -19,7 +19,7 @@
 // Bande LED adressable WS2812B / SK6812 5 V (halo mural, couleur = qualité de l'air).
 // Fil de données via une résistance de 330 ohms, idéalement à travers un
 // 74AHCT1G125 (3,3 V -> 5 V) sur la carte V2.
-#define PIN_LED 18
+#define PIN_LED 18                  // alimentation de la bande : broche 5V (voisine de CMD, sans pont d'étain)
 #define LED_COUNT 22                // par défaut : 60 LED/m, ~37 cm en U autour du socle
 #define LED_COUNT_MAX 120           // maximum réglable par la commande « led.count <n> »
 #define LED_BRIGHTNESS_DEFAULT 40   // %, réglable par la commande « led <0-100> »
