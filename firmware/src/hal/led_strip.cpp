@@ -200,12 +200,16 @@ void LedStrip::tick() {
   bool fx = false;
 
   const float ota = ledfx::otaProgress;
+  if (isnan(ota)) otaLit_ = -1;
   if (!guard_ && !isnan(ota)) {
-    // Mise à jour : barre bleue qui se remplit, tête qui scintille
-    const float fill = ota * n;
+    // Mise à jour : barre bleue qui se remplit. Une image seulement quand une
+    // LED de plus s'allume : pendant l'écriture en flash, des envois à
+    // 33 images/s ralentissaient l'envoi jusqu'au watchdog (0.9.13).
+    const int16_t lit = (int16_t)(ota * n);
+    if (lit == otaLit_) return;
+    otaLit_ = lit;
     const uint32_t blue = Adafruit_NeoPixel::gamma32(rgb(0, vf / 4, vf));
-    for (uint16_t i = 0; i < n; i++)
-      px[i] = i + 1 <= fill ? blue : (i < fill + 1 ? scale(blue, 0.3f + 0.7f * (fill - i)) : 0);
+    for (uint16_t i = 0; i < n; i++) px[i] = i < lit ? blue : 0;
     fx = true;
   } else if (!guard_ && (int32_t)(findUntil_ - now) > 0) {
     // Trouver la station : pulsation douce blanc-bleu, une par seconde

@@ -55,6 +55,7 @@ class LedStrip {
   volatile uint32_t waveStart_ = 0;
   volatile uint32_t findUntil_ = 0;
   volatile bool pmActive_ = false;
-  bool fxShown_ = false;       // la dernière image était une animation
+  bool fxShown_ = false;
+  int16_t otaLit_ = -1;        // LED allumées dans la barre de mise à jour       // la dernière image était une animation
   uint32_t baseColor(uint32_t now, uint8_t v) const;
 };
