@@ -198,6 +198,31 @@ void LedStrip::tick() {
   const uint32_t base = v ? baseColor(now, v) : 0;
   for (uint16_t i = 0; i < n; i++) px[i] = base;
   bool fx = false;
+  if (v && !isnan(cur_) && cur_ < 3.5f) {
+    // Lumière vivante : chaque LED respire très lentement (±7 % d'intensité),
+    // deux ondes de 13 s et 23 s qui se croisent sans jamais se répéter tout
+    // à fait. À faible luminosité, une LED n'a que quelques niveaux : le calcul
+    // se fait en lumière réelle (après gamma) et le reste est reporté sur la
+    // LED voisine, pour que la lumière moyenne reste exacte et sans paliers.
+    const float t = now / 1000.0f;
+    const uint16_t h = (uint16_t)(aircolor::hue(cur_) / 360.0f * 65535.0f);
+    const uint32_t c = Adafruit_NeoPixel::ColorHSV(h, 255, v);
+    float lin[3], err[3] = {0, 0, 0};
+    for (int k = 0; k < 3; k++) lin[k] = 255 * powf(((c >> (16 - 8 * k)) & 0xFF) / 255.0f, 2.6f);
+    for (uint16_t i = 0; i < n; i++) {
+      const float x = (float)i / n;
+      const float m = 0.93f + 0.07f * (0.6f * sinf(2 * PI * (t / 13 + x * 0.7f)) + 0.4f * sinf(2 * PI * (t / 23 - x * 1.3f + 0.3f)));
+      uint32_t o = 0;
+      for (int k = 0; k < 3; k++) {
+        const float want = lin[k] * m + err[k];
+        const float q = fminf(255, fmaxf(0, roundf(want)));
+        err[k] = want - q;
+        o |= (uint32_t)q << (16 - 8 * k);
+      }
+      px[i] = o;
+    }
+    fx = true;
+  }
 
   const float ota = ledfx::otaProgress;
   if (isnan(ota)) otaLit_ = -1;
