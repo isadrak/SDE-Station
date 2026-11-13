@@ -200,7 +200,7 @@ void LedStrip::tick() {
   bool fx = false;
   if (v && !isnan(cur_) && cur_ < 3.5f) {
     // Lumière vivante, très discrète : toute la bande respire doucement
-    // (70 à 100 % de lumière, rythme d'environ 8 s, irrégulier) et chaque LED
+    // (50 à 100 % de lumière, rythme d'environ 8 s, irrégulier) et chaque LED
     // dérive lentement de quelques degrés de teinte autour de la couleur de
     // l'air, à son propre rythme (ondes de 7 et 19 s décalées le long de la
     // bande) : des nuances qui bougent, jamais une LED qui change de couleur.
@@ -208,18 +208,31 @@ void LedStrip::tick() {
     // voisine pour éviter les paliers à faible luminosité.
     const float t = now / 1000.0f;
     const float h0 = aircolor::hue(cur_);
-    const float g = 0.85f + 0.15f * (0.7f * sinf(2 * PI * t / 8) + 0.3f * sinf(2 * PI * t / 13));
+    const float g = 0.75f + 0.25f * (0.7f * sinf(2 * PI * t / 8) + 0.3f * sinf(2 * PI * t / 13));
+    // Plafond de courant calculé sur le haut de la respiration : appliqué image
+    // par image, il aplatissait la respiration à forte luminosité.
+    float cap = 1;
+    {
+      const uint32_t c0 = Adafruit_NeoPixel::ColorHSV((uint16_t)(h0 / 360.0f * 65535.0f), 255, v);
+      float sum = 0;
+      for (int k = 0; k < 3; k++) {
+        const float y = ((c0 >> (16 - 8 * k)) & 0xFF) / 255.0f;
+        sum += 255 * y * y * sqrtf(y);
+      }
+      const float ma = sum * n * 20 / 255;
+      if (ma > LED_MAX_MA * 0.95f) cap = LED_MAX_MA * 0.95f / ma;
+    }
     float err[3] = {0, 0, 0};
     for (uint16_t i = 0; i < n; i++) {
       const float x = (float)i / n;
-      const float dh = 15 * (0.6f * sinf(2 * PI * (t / 7 + x * 1.7f)) + 0.4f * sinf(2 * PI * (t / 19 - x * 2.3f + 0.4f)));
+      const float dh = 25 * (0.6f * sinf(2 * PI * (t / 7 + x * 1.7f)) + 0.4f * sinf(2 * PI * (t / 19 - x * 2.3f + 0.4f)));
       const float m = g * (0.94f + 0.06f * sinf(2 * PI * (t / 11 + x * 1.1f)));
       const uint16_t h = (uint16_t)((h0 + dh + 360) / 360.0f * 65535.0f);
       const uint32_t c = Adafruit_NeoPixel::ColorHSV(h, 255, v);
       uint32_t o = 0;
       for (int k = 0; k < 3; k++) {
         const float y = ((c >> (16 - 8 * k)) & 0xFF) / 255.0f;
-        const float want = 255 * y * y * sqrtf(y) * m + err[k];
+        const float want = 255 * y * y * sqrtf(y) * m * cap + err[k];
         const float q = fminf(255, fmaxf(0, roundf(want)));
         err[k] = want - q;
         o |= (uint32_t)q << (16 - 8 * k);
