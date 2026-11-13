@@ -200,10 +200,8 @@ void LedStrip::tick() {
   bool fx = false;
   if (v && !isnan(cur_) && cur_ < 3.5f) {
     // Lumière vivante, très discrète : toute la bande respire doucement
-    // (50 à 100 % de lumière, rythme d'environ 8 s, irrégulier) et chaque LED
-    // dérive lentement de quelques degrés de teinte autour de la couleur de
-    // l'air, à son propre rythme (ondes de 7 et 19 s décalées le long de la
-    // bande) : des nuances qui bougent, jamais une LED qui change de couleur.
+    // (50 à 100 % de lumière, rythme d'environ 8 s, irrégulier), avec des
+    // nuances qui glissent le long de la bande (voir plus bas).
     // Calcul en lumière réelle (gamma 2,5) ; le reste d'arrondi passe à la LED
     // voisine pour éviter les paliers à faible luminosité.
     const float t = now / 1000.0f;
@@ -225,9 +223,16 @@ void LedStrip::tick() {
     float err[3] = {0, 0, 0};
     for (uint16_t i = 0; i < n; i++) {
       const float x = (float)i / n;
-      const float dh = 25 * (0.6f * sinf(2 * PI * (t / 7 + x * 1.7f)) + 0.4f * sinf(2 * PI * (t / 19 - x * 2.3f + 0.4f)));
+      // Champ lent de 0 à 1 qui dessine des taches mouvantes le long de la bande
+      const float w = 0.5f + 0.5f * (0.6f * sinf(2 * PI * (t / 7 + x * 1.7f)) + 0.4f * sinf(2 * PI * (t / 19 - x * 2.3f + 0.4f)));
+      // Les taches prennent la couleur de la note suivante, d'autant plus que
+      // la mesure s'approche du seuil : vert pur avec de légères nuances quand
+      // l'air est bon, du jaune qui gagne la bande juste avant le passage au
+      // jaune, puis du rouge qui commence à circuler dans le jaune.
+      const float f = cur_ - floorf(cur_);
+      const float hue = aircolor::hue(fminf(4, cur_ + 1.2f * f * f * w * w)) + 4 * sinf(2 * PI * (t / 13 + x * 0.9f));
       const float m = g * (0.94f + 0.06f * sinf(2 * PI * (t / 11 + x * 1.1f)));
-      const uint16_t h = (uint16_t)((h0 + dh + 360) / 360.0f * 65535.0f);
+      const uint16_t h = (uint16_t)(fmodf(hue + 360, 360) / 360.0f * 65535.0f);
       const uint32_t c = Adafruit_NeoPixel::ColorHSV(h, 255, v);
       uint32_t o = 0;
       for (int k = 0; k < 3; k++) {
