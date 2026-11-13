@@ -199,9 +199,8 @@ void LedStrip::tick() {
   for (uint16_t i = 0; i < n; i++) px[i] = base;
   bool fx = false;
   if (v && !isnan(cur_) && cur_ < 3.5f) {
-    // Lumière vivante : chaque LED respire lentement (de 50 à 100 % de son
-    // intensité), deux ondes de 9 s et 17 s qui se croisent sans jamais se répéter tout
-    // à fait. À faible luminosité, une LED n'a que quelques niveaux : le calcul
+    // Lumière vivante : la bande respire lentement (de 30 à 100 % de lumière),
+    // avec une ondulation légère qui glisse le long de la bande. À faible luminosité, une LED n'a que quelques niveaux : le calcul
     // se fait en lumière réelle (après gamma) et le reste est reporté sur la
     // LED voisine, pour que la lumière moyenne reste exacte et sans paliers.
     const float t = now / 1000.0f;
@@ -212,9 +211,13 @@ void LedStrip::tick() {
       const float x = ((c >> (16 - 8 * k)) & 0xFF) / 255.0f;
       lin[k] = 255 * x * x * sqrtf(x);  // gamma 2,5 (powf coûtait 3 ko de flash)
     }
+    // Respiration de toute la bande (sinon la lumière totale reste la même et
+    // le halo sur le mur ne bouge pas) : rythme d'environ 8 s, irrégulier.
+    const float b = 0.7f * sinf(2 * PI * t / 8) + 0.3f * sinf(2 * PI * t / 13);
+    const float g = 0.65f + 0.35f * b;
     for (uint16_t i = 0; i < n; i++) {
       const float x = (float)i / n;
-      const float m = 0.75f + 0.25f * (0.6f * sinf(2 * PI * (t / 9 + x * 0.7f)) + 0.4f * sinf(2 * PI * (t / 17 - x * 1.3f + 0.3f)));
+      const float m = g * (0.85f + 0.15f * sinf(2 * PI * (t / 11 + x * 0.8f)));
       uint32_t o = 0;
       for (int k = 0; k < 3; k++) {
         const float want = lin[k] * m + err[k];
