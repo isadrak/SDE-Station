@@ -17,8 +17,11 @@ FILES.forEach(([url, file, mime], i) => {
   let raw = fs.readFileSync(path.join(APP, file));
   // Page : sans l'indentation ni les lignes de commentaire (« // ... »), pour
   // gagner ~7 ko de flash. Le fichier source reste lisible.
-  if (file.endsWith('.html')) raw = Buffer.from(raw.toString('utf8').split('\n').map(l => l.trim())
-    .filter(l => l && !l.startsWith('//')).join('\n'));
+  // Feuille de style : sans commentaires ni espaces autour de { } ; , > et après « : ».
+  if (file.endsWith('.html')) raw = Buffer.from(raw.toString('utf8')
+    .replace(/<style>[\s\S]*?<\/style>/g, css => css.replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\s*([{};,>])\s*/g, '$1').replace(/:\s+/g, ':'))
+    .split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('//')).join('\n'));
   const gz = !mime.startsWith('image/');            // les PNG sont déjà compressés
   const data = gz ? zlib.gzipSync(raw, { level: 9 }) : raw;
   total += data.length;
