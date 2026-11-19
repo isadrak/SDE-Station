@@ -23,10 +23,12 @@ node tools/gen_assets.js
 # Croquis Arduino : un .ino vide + le dossier src/
 rm -rf build && mkdir -p build/sketch/sde && touch build/sketch/sde/sde.ino
 cp -r src build/sketch/sde/src
-# Table de partitions V2 (programme de 1,5 Mo), prise en compte par arduino-cli
+# Table de partitions V2 (programme de 1,5 Mo), prise en compte par arduino-cli ;
+# upload.maximum_size relève la limite de taille de la carte « esp32 » (1,25 Mo par défaut).
 cp partitions.csv build/sketch/sde/
 arduino-cli compile --fqbn $FQBN --output-dir build/out \
-  --build-property "compiler.cpp.extra_flags=-DSDE_FW_VERSION=\"$VER\"" build/sketch/sde
+  --build-property "compiler.cpp.extra_flags=-DSDE_FW_VERSION=\"$VER\"" \
+  --build-property "upload.maximum_size=1572864" build/sketch/sde
 
 mkdir -p dist
 cp build/out/sde.ino.bin dist/sde-firmware-$VER-ota.bin
