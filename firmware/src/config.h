@@ -101,8 +101,9 @@
 // conséquence. Valeur par défaut à la sortie d'atelier :
 #define TEMP_OFFSET_DEFAULT 0.0f
 
-// Bouton BOOT de l'ESP32 (accessible avec un trombone sous le boîtier V2) :
-// appui de 8 s = oublier le Wi-Fi de la maison et remettre le mot de passe du
-// point d'accès d'usine.
+// Bouton BOOT de l'ESP32 (accessible avec un trombone par le capot V2) :
+// appui de 8 à 20 s puis relâché = oublier le Wi-Fi de la maison et remettre
+// le mot de passe du point d'accès d'usine.
 #define PIN_BUTTON 0
 #define BUTTON_RESET_MS 8000
+#define BUTTON_RESET_MAX_MS 20000

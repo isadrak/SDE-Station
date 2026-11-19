@@ -119,7 +119,7 @@ async function main() {
 <h1>Station de diagnostic environnemental</h1>
 <p class="sub">Station <b>${esc(id)}</b> · mise en service le ${date}</p>
 ${blocks.map(([t, svg, txt]) => `<div class="b"><div>${svg || ""}</div><div><h2>${t}</h2><p>${txt}</p></div></div>`).join("\n")}
-<div class="foot">Gardez cette fiche : les codes 3 et 4 donnent accès à vos mesures. Bouton sous la station (trombone, 8 secondes) : remet le Wi-Fi à zéro, la lumière clignote pour confirmer. Calibration du CO2 : Réglages › Avancé, station dehors ou devant une fenêtre grande ouverte.</div>
+<div class="foot">Gardez cette fiche : les codes 3 et 4 donnent accès à vos mesures. Petit trou en façade : enfoncez un trombone 8 à 20 secondes, jusqu'au clignotement de la lumière, puis relâchez : le Wi-Fi revient au réglage d'usine (étape 2 à refaire). Calibration du CO2 : Réglages › Avancé, station dehors ou devant une fenêtre grande ouverte.</div>
 </body></html>`;
   const fiche = join(out, `fiche-${id}.html`);
   writeFileSync(fiche, html);

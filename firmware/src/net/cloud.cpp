@@ -96,6 +96,7 @@ volatile bool wasUp_ = false;          // ce client s'est connecté au moins une
 volatile bool needInfo_ = false, needLive_ = false;
 const char* volatile err_ = nullptr;   // dernière erreur, en clair
 volatile bool paused_ = false;         // coupé au démarrage après des plantages
+volatile uint32_t yieldUntil_ = 0;     // connexion rendue pour une alerte jusqu'à cet instant (0 = non)
 char errBuf_[160];
 
 // Traduit l'échec de connexion TCP/TLS, avec les codes bruts à la fin pour
@@ -370,7 +371,16 @@ void task(void*) {
     }
     // On attend Internet et l'heure (NTP) avant de lancer le client ; au
     // pire 60 s après le démarrage.
-    if (!client_ && !paused_ && host_.length() && wifi_->homeConnected() && (timekeeper::valid() || millis() > 60000) &&
+    // Une alerte a demandé la mémoire du TLS : on coupe et on attend.
+    if (yieldUntil_) {
+      if ((int32_t)(millis() - yieldUntil_) >= 0) {
+        yieldUntil_ = 0;
+        nextTry = millis();
+      } else if (client_) {
+        stopClient();
+      }
+    }
+    if (!client_ && !paused_ && !yieldUntil_ && host_.length() && wifi_->homeConnected() && (timekeeper::valid() || millis() > 60000) &&
         (int32_t)(millis() - nextTry) >= 0) {
       // Le TLS demande d'un coup un bloc de 16 ko et environ 40 ko en tout :
       // sans cette marge, l'allocation échoue ailleurs et la station plante.
@@ -445,6 +455,9 @@ String cleanHost(String h) {
 }
 
 }  // namespace
+
+void yieldTls(uint32_t ms) { yieldUntil_ = (millis() + ms) | 1; }
+bool tlsActive() { return client_ != nullptr; }
 
 void begin(DataStore* store, WifiManager* wifi, bool paused) {
   store_ = store;

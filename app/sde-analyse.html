@@ -3810,7 +3810,10 @@ function submitFirmware(e) {
   msg.style.color = "";
   if (!file) { fail("Choisis le fichier du firmware (.bin)."); return; }
   if (/merged/i.test(file.name)) { fail("Ce fichier « merged » sert au premier flash par USB. Pour la mise à jour par Wi-Fi, prends le fichier qui finit par « -ota.bin »."); return; }
-  if (file.size < 100e3 || file.size > 1310720) { fail(`Ce fichier ne ressemble pas à un firmware SDE (${Math.round(file.size / 1024)} ko).`); return; }
+  // Place pour le programme : donnée par le firmware 0.10+ (table V2 : 1,5 Mo), sinon table V1 (1,25 Mo).
+  const otaMax = lastInfo?.ota_max || 1310720;
+  if (file.size < 100e3 || file.size > 1572864) { fail(`Ce fichier ne ressemble pas à un firmware SDE (${Math.round(file.size / 1024)} ko).`); return; }
+  if (file.size > otaMax) { fail("Cette version est trop grosse pour la mémoire actuelle de la station : elle s'installe une seule fois par câble USB, avec le fichier « -merged.bin » (voir le guide). Les mises à jour suivantes repasseront par le Wi-Fi."); return; }
   if (!pass) { fail("Entre le mot de passe du Wi-Fi de la station."); return; }
   if (!confirm(`Installer ${file.name} sur la station ?\n\nElle redémarrera à la fin (environ 1 min). Ne la débranche pas pendant l'envoi.`)) return;
   const body = new FormData();

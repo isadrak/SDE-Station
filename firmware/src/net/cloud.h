@@ -33,5 +33,9 @@ void onSample(const Sample& s);  // depuis la tâche comms
 // Enregistre le serveur (adresse vide = désactiver). Faux si l'adresse est invalide.
 bool configure(const String& host, const String& user, const String& pass);
 void status(JsonObject out);
+// Libère la connexion TLS pendant ms millisecondes (une alerte ntfy a besoin
+// de ~40 ko de tas, autant que la connexion MQTT), puis reconnecte.
+void yieldTls(uint32_t ms);
+bool tlsActive();
 
 }  // namespace cloud

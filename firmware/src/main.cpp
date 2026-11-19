@@ -742,25 +742,36 @@ static void updateLeds(const Sample& s) {
   leds.setTarget(aircolor::worst(pm25, pm10, co2, rh));
 }
 
-// Bouton BOOT (trombone sous le boîtier) : 8 s d'appui = retour au réglage
-// Wi-Fi d'usine (Wi-Fi de la maison oublié, mot de passe « sde-station » pour
-// le point d'accès). La bande LED clignote pour confirmer.
+// Bouton BOOT (trombone dans le capot) : appui de 8 à 20 s puis relâché =
+// retour au réglage Wi-Fi d'usine (Wi-Fi de la maison oublié, mot de passe
+// « sde-station » pour le point d'accès). À 8 s, la bande LED clignote : on
+// peut relâcher. L'action part au relâchement, et jamais si la broche reste
+// basse plus de 20 s : sur le DevKitC, GPIO0 est aussi tiré par le circuit de
+// reset automatique quand un moniteur série tient DTR sans RTS.
 static void checkButton() {
   static uint32_t downSince = 0;
-  static bool done = false;
+  static bool armed = false, signaled = false;
+  const uint32_t now = millis();
   if (digitalRead(PIN_BUTTON) == LOW) {
-    if (!downSince) downSince = millis() | 1;
-    if (!done && millis() - downSince >= BUTTON_RESET_MS) {
-      done = true;
+    if (!armed) return;  // broche basse depuis le démarrage : ignorée jusqu'à un premier relâchement
+    if (!downSince) downSince = now | 1;
+    if (!signaled && now - downSince >= BUTTON_RESET_MS && now - downSince < BUTTON_RESET_MAX_MS) {
+      signaled = true;
+      leds.fxFind(3000);
+    }
+    return;
+  }
+  armed = true;
+  if (downSince) {
+    const uint32_t held = now - downSince;
+    if (held >= BUTTON_RESET_MS && held < BUTTON_RESET_MAX_MS) {
       elog::add("bouton : reglages Wi-Fi remis a zero");
       wifi.forgetHomeNetwork();
       wifi.setApPassword(WIFI_AP_PASS_DEFAULT);
-      leds.fxFind(5000);
     }
-  } else {
-    downSince = 0;
-    done = false;
   }
+  downSince = 0;
+  signaled = false;
 }
 
 static void commsTask(void*) {

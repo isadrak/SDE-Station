@@ -6,6 +6,7 @@
 #include <esp_heap_caps.h>
 
 #include "../config.h"
+#include "cloud.h"
 #include "event_log.h"
 
 namespace alerts {
@@ -90,9 +91,23 @@ void enqueue(const char* title, const char* body, const char* tags, uint8_t prio
 
 // Une requête HTTPS courte vers ntfy.sh. La connexion TLS demande ~40 ko de
 // tas : on attend que la mémoire le permette (l'accès à distance en prend autant).
+bool memoryForTls() {
+  return esp_get_free_heap_size() >= 60000 && heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) >= 30000;
+}
+
 bool post(const Msg& m, const String& t) {
   if (WiFi.status() != WL_CONNECTED) return false;
-  if (esp_get_free_heap_size() < 60000 || heap_caps_get_largest_free_block(MALLOC_CAP_8BIT) < 30000) return false;
+  // Avec l'accès à distance connecté (~50 ko de tas libre), il n'y a pas
+  // la place pour une 2e connexion TLS : on la lui emprunte 30 s.
+  if (!memoryForTls() && cloud::tlsActive()) {
+    cloud::yieldTls(30000);
+    for (int i = 0; i < 50 && cloud::tlsActive(); i++) vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(500));
+  }
+  if (!memoryForTls()) {
+    elog::add("alerte : memoire insuffisante (tas %u ko)", (unsigned)(esp_get_free_heap_size() / 1024));
+    return false;
+  }
   JsonDocument doc;
   doc["topic"] = t;
   doc["title"] = m.title;

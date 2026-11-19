@@ -2,6 +2,8 @@
 //
 // Changements par rapport à la V1 (sde-boitier.scad) :
 //   - inserts laiton M3 à chaud dans le corps et le socle (bossages élargis) ;
+//   - SDS011 décalé de 12 mm vers la droite : son connecteur, sur la face
+//     gauche, se branche enfin ; un conduit relie sa sortie d'air à la paroi ;
 //   - micro-USB en bas : le DevKitC est tourné, prise vers le bas, au-dessus d'un
 //     canal vertical entre le SDS011 et la chambre d'air frais. La fiche entre
 //     par le dessous du boîtier et remonte le canal jusqu'à la prise ;
@@ -64,7 +66,7 @@ usb_z = 13;          // centre du connecteur au-dessus du PCB (mesuré en V1, De
 canal_l = 13;        // largeur intérieure du canal (bout moulé micro-USB ~11 x 7)
 canal_paroi = 1.6;
 // Bouton BOOT du DevKitC, à côté de la prise (côté droit, prise vers le bas, vu de face)
-boot_dx = -8.5;      // depuis le centre de la prise (X) ; à confirmer sur la carte V2
+boot_dx = 8.5;       // depuis le centre de la prise (X) : DevKitC V4, EN à gauche et BOOT à droite de la prise vue de face ; à confirmer
 boot_dy = 4.5;       // depuis le bas du DevKitC (Y)
 boot_haut = 13.7;    // dessus du bouton au-dessus du PCB (8,5 barrette + 1,6 + ~3,6 bouton)
 
@@ -74,6 +76,7 @@ sds_y = 69.5;        // hauteur (Y)
 sds_z = 20;          // épaisseur (Z)
 sds_cale = 3;        // plots sous le capteur
 sds_jeu = 0.5;       // jeu autour du capteur dans son logement
+sds_decal = 12;      // espace à gauche du capteur pour son connecteur (V1 : 0,5 mm, impossible à brancher)
 // Buse d'entrée, sur la face droite
 buse_d = 5;          // diamètre extérieur
 buse_haut = 20;      // centre de la buse depuis le bord du haut
@@ -117,7 +120,7 @@ vis_mur_tete = 9;
 
 /* [Pied de table] */
 pied_incl = 10;      // inclinaison vers l'arrière (degrés)
-pied_leve = 12;      // hauteur du bas de la plaque du pied au-dessus de la table
+pied_leve = 27;      // hauteur du bas de la plaque du pied au-dessus de la table (V2 : le câble USB sort en bas, 20 mm pour le courber)
 pied_l = 100;        // largeur de la base
 pied_avant = 62;     // la base dépasse devant la plaque
 pied_arriere = 32;   // et derrière
@@ -150,11 +153,11 @@ cloison_air = 3;     // lame d'air entre les deux murs de la cloison
 cloison = 2 * cloison_mur + cloison_air;
 mur = 1.6;           // mur entre le SDS011 et la chambre
 
-int_l = sds_jeu + sds_x + jeu + mur + chambre + canal_paroi + canal_l;   // largeur intérieure
+int_l = sds_decal + sds_jeu + sds_x + jeu + mur + chambre + canal_paroi + canal_l;   // largeur intérieure
 L = int_l + 2 * paroi;
 
 // Compartiment air : le SDS011 passe entre les bossages du bas et ceux de la cloison
-sds_x0 = paroi + sds_jeu;
+sds_x0 = paroi + sds_decal + sds_jeu;
 sds_y0 = bos_int + 0.4;
 sds_z0 = dos_ep + sds_cale;
 sds_x1 = sds_x0 + sds_x;
@@ -280,6 +283,12 @@ module corps() {
       // Plots et butées du SDS011
       for (t = sds_trous) translate([sds_x0 + t[0], sds_y0 + t[1], 0]) cylinder(d = 6.5, h = sds_z0);
       guides_sds();
+      // Conduit de sortie : de la sortie du ventilateur à la paroi gauche (l'air
+      // rejeté ne revient pas dans le boîtier), il tient aussi le capteur à gauche
+      translate([paroi - 0.01, sds_y0 + sortie_y - jeu - 1.2, 0])
+        cube([sds_x0 - sds_jeu - paroi + 0.01, sortie_l + 2 * jeu + 2.4, sds_z0 + sortie_z + sortie_h + jeu + 1.2]);
+      // Butée gauche en haut du capteur (le connecteur est plus bas, entre les deux)
+      translate([paroi - 0.01, sds_y1 - 12, 0]) cube([sds_x0 - sds_jeu - paroi + 0.01, 10, sds_z0 + 8]);
       // Plots du BME680
       for (t = bme_trous) translate([t[0], t[1], 0]) cylinder(d = 6, h = dos_ep + 5);
     }
@@ -291,7 +300,7 @@ module corps() {
     for (t = bme_trous) translate([t[0], t[1], 1]) cylinder(d = bme_vis_d, h = 30);
     // Sortie du ventilateur : trou exact dans la paroi gauche
     translate([-1, sds_y0 + sortie_y - jeu, sds_z0 + sortie_z - jeu])
-      cube([paroi + sds_jeu + 1.01, sortie_l + 2 * jeu, sortie_h + 2 * jeu]);
+      cube([sds_x0 + 1.01, sortie_l + 2 * jeu, sortie_h + 2 * jeu]);
     // Buse : encoche en U dans le mur, ouverte vers l'avant
     translate([mur_x - 1, buse_y, buse_zc]) rotate([0, 90, 0]) cylinder(d = encoche, h = mur + 2);
     translate([mur_x - 1, buse_y - encoche / 2, buse_zc]) cube([mur + 2, encoche, P]);
@@ -503,7 +512,9 @@ module pied_brut() {
 // un joint (mousse adhésive ou joint torique) autour de la buse. S'emboîte par
 // l'extérieur, la collerette et sa grille restent sur la paroi. Pièce posée
 // grille en bas sur le plateau.
-conduit_long = L - canal_x0 - joint_ep;
+// Collerette à l'extérieur de la paroi droite ; le joint (dans un lamage de
+// 0,8 mm au bout du tube) est écrasé de 0,3 mm contre le mur.
+conduit_long = L + 1.6 - canal_x0 - (joint_ep - 0.8 - 0.3);
 module conduit() {
   difference() {
     union() {
@@ -564,7 +575,7 @@ module boitier_complet(avec_support = false) {
   if (avec_support) color("SteelBlue") translate([L / 2, y_rail0 - 2, -socle_ep - plaque_ep]) support();
   color("Gold") bande();
   color("White", 0.6) diffuseur();
-  color("DimGray") translate([L, buse_y, buse_zc]) rotate([0, -90, 0]) conduit();
+  color("DimGray") translate([L + 1.6, buse_y, buse_zc]) rotate([0, -90, 0]) conduit();
 }
 
 module bande() {
@@ -593,3 +604,8 @@ module fantomes() {
   // BME680
   color("Purple", 0.8) translate([bme_x0, bme_y0, dos_ep + 5]) cube([bme_l, bme_h, 1.6]);
 }
+
+// Accès pour les vérifications d'assemblage (fichier utilisé avec `use`)
+function P_() = P;
+module conduit_place() translate([L + 1.6, buse_y, buse_zc]) rotate([0, -90, 0]) conduit();
+module support_place() translate([L / 2, y_rail0 - 2, -socle_ep - plaque_ep]) support();

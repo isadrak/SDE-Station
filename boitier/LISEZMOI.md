@@ -89,17 +89,18 @@ Pour modifier une cote : ouvrir `sde-boitier.scad` dans OpenSCAD, choisir la pi�
 
 ![Corps V2](apercu-v2/corps.png)
 
-Même principe que la V1, avec les corrections relevées sur les deux premières stations. À imprimer en PETG. Encombrement : 118,5 × 153,5 mm de face, 29,1 mm de corps sans le capot.
+Même principe que la V1, avec les corrections relevées sur les deux premières stations. À imprimer en PETG. Encombrement : 130,5 × 153,5 mm de face, 29,1 mm de corps sans le capot. Impression estimée (PrusaSlicer, PETG, 0,2 mm, 20 %, 3 périmètres) : environ 24 h et 255 g pour la version murale (corps 11 h 45, capot 4 h, socle 5 h 30, support 1 h, conduit 20 min, diffuseur 1 h), pied 4 h 20. Aucune pièce ne demande de supports ; le plus long pont fait 22 mm (plafond de la sortie d'air du SDS011).
 
 | Changement | Détail |
 |---|---|
 | Inserts laiton M3 à chaud | Trous de 4,0 mm sur 6,5 mm dans le corps (capot) et le socle (corps) ; bossages élargis à 9,2 mm (`inserts = false` revient aux vis directes). |
-| Micro-USB en bas | DevKitC tourné, prise vers le bas, juste au-dessus de la cloison. Un canal vertical de 13 mm, entre le SDS011 et la chambre d'air frais, va du bas du boîtier à la prise : la fiche s'enfile par dessous. Sur la carte V2, le centre de la prise doit tomber à `usb_x` (62,6 mm du bord gauche d'une carte de 83 mm centrée). |
+| SDS011 décalé | 12 mm d'espace à gauche pour brancher son connecteur (impossible en V1). Un conduit de 1,2 mm de paroi relie sa sortie d'air à la paroi gauche et le cale ; une butée en haut complète. Le connecteur doit se trouver entre les deux (hors de y = 11,5 à 34,5 mm et au-dessous de y = 57,5 mm depuis le bas du capteur) : à vérifier au pied à coulisse. |
+| Micro-USB en bas | DevKitC tourné, prise vers le bas, juste au-dessus de la cloison. Un canal vertical de 13 mm, entre le SDS011 et la chambre d'air frais, va du bas du boîtier à la prise : la fiche s'enfile par dessous. Sur la carte V2, le centre de la prise doit tomber à `usb_x` (68,6 mm du bord gauche d'une carte de 83 mm centrée). Sur le pied, le bas du boîtier est maintenant à 21 mm de la table pour courber le câble. |
 | Cloison thermique | Double mur avec une lame d'air de 3 mm, passages de câbles ronds Ø 7 à boucher au mastic. BME680 en bas de la chambre d'air frais par défaut. Avec la correction réglable dans l'appli (Réglages › Avancé). |
-| Entrée du SDS011 | Pièce `conduit` : tube Ø 8 / 5,6 mm de la paroi droite jusqu'au mur du capteur, joint (mousse adhésive ou joint torique 8 × 1,5) contre le mur autour de la buse, collerette avec grille à l'extérieur. Le capteur n'aspire que l'air extérieur ; sa sortie reste à gauche. Le conduit passe sous le plancher du canal USB. |
+| Entrée du SDS011 | Pièce `conduit` (45,8 mm) : tube Ø 8 / 5,6 mm de la paroi droite jusqu'au mur du capteur, joint de 1,5 mm (mousse adhésive ou joint torique 8 × 1,5) dans un lamage au bout du tube, écrasé de 0,3 mm contre le mur autour de la buse, collerette avec grille à l'extérieur. Le capteur n'aspire que l'air extérieur ; sa sortie reste à gauche. Le conduit passe sous le plancher du canal USB. |
 | Clip du support | Lame souple taillée dans le flanc droit du rail (support et pied), avec un bossage qui tombe dans un creux de la rainure en bout de course. |
 | Trou de la bande LED | Oblong 10 × 6 mm dans le dos et le socle (Ø 6 trop juste en V1). |
-| Bouton Wi-Fi | Trou Ø 1,6 dans le capot et guide jusqu'au bouton BOOT : trombone enfoncé 8 s = Wi-Fi remis à zéro. Position à confirmer avec la carte V2 (`boot_dx`, `boot_dy`). |
+| Bouton Wi-Fi | Trou Ø 1,6 dans le capot et guide jusqu'au bouton BOOT (à droite de la prise, vue de face, sur le DevKitC V4) : trombone enfoncé 8 à 20 s puis relâché = Wi-Fi remis à zéro. Position à confirmer avec la carte V2 (`boot_dx`, `boot_dy`). |
 | Logo | Trois vagues de l'icône de l'appli gravées sous « SDE ». |
 | Diffuseur | Pièce `diffuseur` en PETG naturel : jupe à 4 mm des flancs du socle, devant la bande, serrée par une lèvre côté mur. |
 
