@@ -1,7 +1,7 @@
 // SDE - Station de Diagnostic Environnemental
 //
 // Architecture :
-//   HAL         : src/hal/   (pilotes MH-Z19B, SDS011, BME680)
+//   HAL         : src/hal/   (pilotes MH-Z19B / MH-Z1911A, SDS011, BME680)
 //   Application : src/app/   (moyenne mobile, point de rosée, indice COV)
 //   (bande LED : src/hal/led_strip, couleur : src/app/air_color.h)
 //   Réseau      : src/net/   (Wi-Fi, serveur web + API JSON, mémoire 24 h,
@@ -30,8 +30,10 @@
 #include "config.h"
 #include "hal/bme680_sensor.h"
 #include "hal/led_strip.h"
+#include "hal/mhz1911a.h"
 #include "hal/mhz19b.h"
 #include "hal/sds011.h"
+#include "net/alerts.h"
 #include "net/api.h"
 #include "net/cloud.h"
 #include "net/data_store.h"
@@ -46,7 +48,7 @@
 
 // ---------------------------------------------------------------- Données
 
-enum class CmdType : uint8_t { Co2Zero, Co2Abc, PmCycle, PmNow, Interval };
+enum class CmdType : uint8_t { Co2Zero, Co2Abc, PmCycle, PmNow, Interval, Co2CalAuto };
 struct Command {
   CmdType type;
   int32_t arg;
@@ -57,6 +59,38 @@ static QueueHandle_t cmdQueue;
 static volatile uint32_t samplePeriodMs = SAMPLE_PERIOD_MS_DEFAULT;
 
 static MHZ19B co2Sensor(Serial2);
+// Station V2 : MH-Z1911A lu en I2C (Wire1) sur le même connecteur IO16/IO17.
+// Le modèle est détecté au démarrage : MH-Z19B en UART d'abord, puis
+// MH-Z1911A en I2C, en alternance tant qu'aucun des deux n'a répondu.
+static MHZ1911A co2I2c(Wire1);
+enum class Co2Model : uint8_t { Unknown, Mhz19b, Mhz1911a };
+static volatile Co2Model co2Model = Co2Model::Unknown;
+static bool co2TryI2c = false;  // bus en cours d'essai pendant la détection
+static uint8_t co2Tries = 0;
+static const char* co2ModelName() {
+  switch (co2Model) {
+    case Co2Model::Mhz19b: return "MH-Z19B";
+    case Co2Model::Mhz1911a: return "MH-Z1911A";
+    default: return "?";
+  }
+}
+static bool co2IsOk() {
+  if (co2Model == Co2Model::Mhz1911a) return co2I2c.isOk();
+  return co2Sensor.isOk();
+}
+
+// Calibration guidée du CO2 (« co2.cal.auto ») : la station est posée dehors
+// ou devant une fenêtre grande ouverte ; elle attend au moins 20 min, puis que
+// la moyenne reste sous 550 ppm et ne varie plus de 25 ppm sur 5 min, et se
+// calibre seule à 400 ppm. Abandon au bout d'une heure.
+static volatile uint32_t calStartMs = 0;  // 0 = pas de calibration en cours
+static volatile uint8_t calResult = 0;    // 0 aucune, 1 réussie, 2 air trop chargé, 3 annulée
+static float calMin[5];                   // moyenne de chaque minute, [0] = la plus récente
+static uint32_t calLastMin = 0;
+static const char* const kCalResults[] = {"", "ok", "high", "cancel"};
+
+// Correction de température du BME680 (°C retirés de la mesure), en NVS.
+static volatile float tempOffset = TEMP_OFFSET_DEFAULT;
 static SDS011 pmSensor(Serial1);
 static PmCycle pmCycle(pmSensor);
 static BME680Sensor envSensor;
@@ -213,10 +247,97 @@ static void setCo2Abc(bool on) {
 
 // ---------------------------------------------------------------- Acquisition
 
+// Lit le capteur de CO2 détecté ; pendant la détection, change de bus après
+// 6 essais ratés (les deux sens de branchement, 3 fois chacun).
+static bool co2Read(uint16_t& ppm, float& tempC) {
+  tempC = NAN;
+  if (!co2TryI2c) {
+    int8_t t;
+    if (co2Sensor.read(ppm, t)) {
+      if (co2Model == Co2Model::Unknown) elog::add("CO2 : MH-Z19B detecte (UART)");
+      co2Model = Co2Model::Mhz19b;
+      tempC = t;
+      return true;
+    }
+  } else if (co2I2c.read(ppm)) {
+    if (co2Model == Co2Model::Unknown) elog::add("CO2 : MH-Z1911A detecte (I2C 0x31)");
+    co2Model = Co2Model::Mhz1911a;
+    return true;
+  }
+  if (co2Model == Co2Model::Unknown && ++co2Tries >= 6) {
+    co2Tries = 0;
+    if (co2TryI2c) {
+      co2I2c.end();
+      co2Sensor.reopen();
+    } else {
+      co2Sensor.end();
+      co2I2c.begin(PIN_MHZ_RX, PIN_MHZ_TX);
+    }
+    co2TryI2c = !co2TryI2c;
+  }
+  return false;
+}
+
+// Calibration à 400 ppm : le capteur doit être à l'air extérieur depuis 20 min.
+static void co2CalibrateZero() {
+  if (co2Model == Co2Model::Mhz1911a) {
+    const bool ok = co2I2c.calibrate(400);
+    elog::add("CO2 : calibration 400 ppm %s", ok ? "envoyee" : "refusee par le capteur");
+  } else {
+    co2Sensor.calibrateZero();
+    elog::add("CO2 : calibration 400 ppm envoyee");
+  }
+}
+
+// L'humidité relative dépend de la température : avec la même quantité de
+// vapeur d'eau, l'air corrigé (plus froid) est plus humide. Pression de vapeur
+// saturante de Magnus.
+static float magnusEs(float t) { return 6.112f * expf(17.62f * t / (243.12f + t)); }
+
+static void co2CalibrateZero();
+static void calStep(float co2Avg) {
+  const uint32_t now = millis();
+  if (now - calLastMin < 60000) return;
+  calLastMin = now;
+  memmove(calMin + 1, calMin, sizeof(calMin) - sizeof(float));
+  calMin[0] = co2Avg;
+  const uint32_t elapsed = now - calStartMs;
+  float lo = calMin[0], hi = calMin[0];
+  bool full = true;
+  for (float v : calMin) {
+    if (isnan(v)) full = false;
+    else lo = min(lo, v), hi = max(hi, v);
+  }
+  if (elapsed >= 20UL * 60000 && full && hi < 550 && hi - lo <= 25) {
+    elog::add("CO2 : calibration guidee, air stable a %.0f ppm", co2Avg);
+    co2CalibrateZero();
+    calResult = 1;
+    calStartMs = 0;
+  } else if (elapsed >= 60UL * 60000) {
+    elog::add("CO2 : calibration guidee abandonnee (%.0f ppm, air pas assez frais ou instable)", co2Avg);
+    calResult = 2;
+    calStartMs = 0;
+  }
+}
+
 static void handleCommand(const Command& c) {
   switch (c.type) {
-    case CmdType::Co2Zero: co2Sensor.calibrateZero(); break;
-    case CmdType::Co2Abc: setCo2Abc(c.arg != 0); break;
+    case CmdType::Co2CalAuto:
+      if (c.arg) {
+        for (float& v : calMin) v = NAN;
+        calLastMin = millis();
+        calResult = 0;
+        calStartMs = millis() | 1;
+        elog::add("CO2 : calibration guidee lancee");
+      } else if (calStartMs) {
+        calStartMs = 0;
+        calResult = 3;
+      }
+      break;
+    case CmdType::Co2Zero: co2CalibrateZero(); break;
+    case CmdType::Co2Abc:
+      if (co2Model != Co2Model::Mhz1911a) setCo2Abc(c.arg != 0);
+      break;
     case CmdType::PmCycle: pmCycle.setPeriod(c.arg); break;
     case CmdType::PmNow: pmCycle.measureNow(); break;
     case CmdType::Interval: samplePeriodMs = c.arg; break;
@@ -254,9 +375,9 @@ static void sensorTask(void*) {
 
     // CO2
     uint16_t ppm;
-    int8_t t;
-    s.co2Ok = co2Sensor.read(ppm, t);
-    if (s.co2Ok && !co2Configured) {
+    float t;
+    s.co2Ok = co2Read(ppm, t);
+    if (s.co2Ok && !co2Configured && co2Model == Co2Model::Mhz19b) {
       // Renvoie la config une fois le capteur joignable (utile si RX/TX
       // ont dû être inversés après le démarrage).
       setCo2Abc(false);
@@ -267,14 +388,15 @@ static void sensorTask(void*) {
       co2Configured = true;
     }
     s.co2Warm = co2Sensor.isWarmingUp();
-    s.co2Swapped = co2Sensor.isSwapped();
-    s.co2Rx = co2Sensor.lastRxBytes();
+    s.co2Swapped = co2TryI2c ? co2I2c.isSwapped() : co2Sensor.isSwapped();
+    s.co2Rx = co2TryI2c ? co2I2c.lastRxBytes() : co2Sensor.lastRxBytes();
     if (s.co2Ok) {
       s.co2 = ppm;
       s.co2TempC = t;
       // Pendant le préchauffage, les valeurs sont fausses : on ne les
       // fait pas entrer dans la moyenne.
       s.co2Avg = s.co2Warm ? NAN : co2Avg.add(ppm);
+      if (calStartMs && !isnan(s.co2Avg)) calStep(s.co2Avg);
     }
 
     // Particules
@@ -291,13 +413,18 @@ static void sensorTask(void*) {
     s.envOk = envSensor.read(env);
     s.envAddr = envSensor.address();
     if (s.envOk) {
-      s.tempC = env.tempC;
+      const float off = tempOffset;
+      s.tempC = env.tempC - off;
       s.rh = env.humidity;
+      if (off != 0.0f && !isnan(env.humidity)) {
+        s.rh = env.humidity * magnusEs(env.tempC) / magnusEs(s.tempC);
+        if (s.rh > 100.0f) s.rh = 100.0f;
+      }
       s.pressure = env.pressureHpa;
       s.gasKohm = env.gasKohm;
       s.vocIdx = gasIndex.update(env.gasKohm, samplePeriodMs / 1000.0f);
-      s.dewPoint = metrics::dewPoint(env.tempC, env.humidity);
-      s.absHum = metrics::absoluteHumidity(env.tempC, env.humidity);
+      s.dewPoint = metrics::dewPoint(s.tempC, s.rh);
+      s.absHum = metrics::absoluteHumidity(s.tempC, s.rh);
     }
 
     xQueueSend(sampleQueue, &s, 0);  // si la file est pleine, on perd ce point
@@ -325,7 +452,16 @@ void buildInfo(JsonDocument& doc) {
   time["src"] = timekeeper::sourceName();
   if (timekeeper::valid()) time["epoch"] = (uint32_t)timekeeper::now();
   JsonObject sensors = doc["sensors"].to<JsonObject>();
-  sensors["co2"] = co2Sensor.isOk();
+  sensors["co2"] = co2IsOk();
+  doc["co2_model"] = co2ModelName();
+  if (calStartMs || calResult) {
+    JsonObject cal = doc["co2_cal"].to<JsonObject>();
+    cal["run"] = calStartMs != 0;
+    if (calStartMs) cal["s"] = (millis() - calStartMs) / 1000;
+    if (calResult) cal["res"] = kCalResults[calResult];
+  }
+  doc["t_offset"] = round1(tempOffset);
+  alerts::toJson(doc["alert"].to<JsonObject>());
   JsonObject range = doc["co2_range"].to<JsonObject>();
   range["set"] = CO2_RANGE_PPM;
   range["ack"] = co2RangeAck;
@@ -401,7 +537,7 @@ void sampleToJson(const Sample& s, JsonObject doc) {
   } else if (s.co2Ok) {
     co2["ppm"] = (int)s.co2;
     if (!isnan(s.co2Avg)) co2["avg"] = round1(s.co2Avg);
-    co2["t"] = (int)s.co2TempC;
+    if (!isnan(s.co2TempC)) co2["t"] = (int)s.co2TempC;
   }
 
   JsonObject pm = doc["pm"].to<JsonObject>();
@@ -431,19 +567,47 @@ void sampleToJson(const Sample& s, JsonObject doc) {
 // Commandes texte, une par ligne :
 //   info | interval <ms> | co2.zero | co2.abc on|off
 //   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.count <1-120> | led.find | led.night on|off
-//   name <nom de la pièce>
+//   name <nom de la pièce> | temp.offset <°C> | co2.cal.auto | co2.cal.stop
+//   alert.topic <sujet> | alert.off | alert.co2 <ppm> | alert.rh <%> | alert.test
 void runCommand(String line, JsonDocument& reply) {
   line.trim();
   Command c;
   if (line == "info") {
     buildInfo(reply);
     return;
+  } else if (alerts::command(line, reply)) {
+    return;
+  } else if (line.startsWith("temp.offset ")) {
+    // temp.offset <°C> : degrés retirés à la mesure du BME680 (-10 à 10)
+    const String v = line.substring(12);
+    const float off = v.toFloat();
+    if (off < -10.0f || off > 10.0f || (off == 0.0f && v != "0" && v != "0.0")) {
+      setAck(reply, "temp.offset", false, "Valeur hors limites (-10 a 10 degres)");
+      return;
+    }
+    tempOffset = roundf(off * 10.0f) / 10.0f;
+    Preferences p;
+    p.begin("sde", false);
+    p.putFloat("t_off", tempOffset);
+    p.end();
+    setAck(reply, "temp.offset", true, "Correction de temperature enregistree");
+    return;
+  } else if (line == "co2.cal.auto" || line == "co2.cal.stop") {
+    const bool start = line.endsWith("auto");
+    c = {CmdType::Co2CalAuto, start ? 1 : 0};
+    setAck(reply, "co2.cal", true,
+           start ? "Calibration guidee lancee : laisser la station dehors, elle se calibre seule des que l'air est stable (20 min a 1 h)"
+                 : "Calibration guidee annulee");
   } else if (line == "co2.zero") {
     c = {CmdType::Co2Zero, 0};
     setAck(reply, "co2.zero", true, "Calibration 400 ppm envoyee (capteur a l'air exterieur depuis 20 min ?)");
   } else if (line == "co2.abc on" || line == "co2.abc off") {
     bool on = line.endsWith("on");
     c = {CmdType::Co2Abc, on ? 1 : 0};
+    if (co2Model == Co2Model::Mhz1911a) {
+      setAck(reply, "co2.abc", false, "Le MH-Z1911A ne permet pas de regler l'auto-calibration");
+      return;
+    }
     setAck(reply, "co2.abc", true, on ? "Auto-calibration activee" : "Auto-calibration desactivee");
   } else if (line.startsWith("pm.cycle ")) {
     long sec = line.substring(9).toInt();
@@ -578,6 +742,27 @@ static void updateLeds(const Sample& s) {
   leds.setTarget(aircolor::worst(pm25, pm10, co2, rh));
 }
 
+// Bouton BOOT (trombone sous le boîtier) : 8 s d'appui = retour au réglage
+// Wi-Fi d'usine (Wi-Fi de la maison oublié, mot de passe « sde-station » pour
+// le point d'accès). La bande LED clignote pour confirmer.
+static void checkButton() {
+  static uint32_t downSince = 0;
+  static bool done = false;
+  if (digitalRead(PIN_BUTTON) == LOW) {
+    if (!downSince) downSince = millis() | 1;
+    if (!done && millis() - downSince >= BUTTON_RESET_MS) {
+      done = true;
+      elog::add("bouton : reglages Wi-Fi remis a zero");
+      wifi.forgetHomeNetwork();
+      wifi.setApPassword(WIFI_AP_PASS_DEFAULT);
+      leds.fxFind(5000);
+    }
+  } else {
+    downSince = 0;
+    done = false;
+  }
+}
+
 static void commsTask(void*) {
   esp_task_wdt_add(nullptr);
   sendInfo();
@@ -591,6 +776,7 @@ static void commsTask(void*) {
     if (xQueueReceive(sampleQueue, &s, pdMS_TO_TICKS(50)) == pdTRUE) {
       store.add(s);
       cloud::onSample(s);
+      alerts::onSample(s, roomName());
       updateLeds(s);
       JsonDocument doc;
       sampleToJson(s, doc.to<JsonObject>());
@@ -599,6 +785,7 @@ static void commsTask(void*) {
     store.tick();  // date les minutes en attente et les écrit en flash
     elog::tick();
     leds.tick();
+    checkButton();
 
     while (Serial.available()) {
       char ch = (char)Serial.read();
@@ -634,6 +821,13 @@ void setup() {
   delay(200);
   recordBoot();
   readCrash();
+  {
+    Preferences p;
+    p.begin("sde", true);
+    tempOffset = p.getFloat("t_off", TEMP_OFFSET_DEFAULT);
+    p.end();
+  }
+  pinMode(PIN_BUTTON, INPUT_PULLUP);
 
   co2Sensor.begin(PIN_MHZ_RX, PIN_MHZ_TX);
   co2Sensor.setAutoCalibration(false);  // pas d'ABC en intérieur occupé en continu
@@ -659,6 +853,7 @@ void setup() {
   if (bootCrash.length() && strcmp(bootReason, "power_on") && strcmp(bootReason, "restart") && strcmp(bootReason, "brownout"))
     elog::add("plantage : %s", bootCrash.c_str());
   wifi.begin();
+  alerts::begin(wifi.apSsid());
   timekeeper::begin(TIMEZONE);
 
   esp_task_wdt_init(WDT_TIMEOUT_S, true);

@@ -84,3 +84,29 @@ Visserie :
 Ordre de montage : bande sur le socle, socle sur le corps, SDS011 (buse dans l'encoche), BME680, carte, câbles dans la cloison puis mousse, antenne collée contre la paroi droite, capot.
 
 Pour modifier une cote : ouvrir `sde-boitier.scad` dans OpenSCAD, choisir la pièce avec `piece` (`interieur` et `sur_table` affichent l'ensemble monté), F6, puis export STL.
+
+## Version 2 (`sde-boitier-v2.scad`, `stl-v2/`)
+
+![Corps V2](apercu-v2/corps.png)
+
+Même principe que la V1, avec les corrections relevées sur les deux premières stations. À imprimer en PETG. Encombrement : 118,5 × 153,5 mm de face, 29,1 mm de corps sans le capot.
+
+| Changement | Détail |
+|---|---|
+| Inserts laiton M3 à chaud | Trous de 4,0 mm sur 6,5 mm dans le corps (capot) et le socle (corps) ; bossages élargis à 9,2 mm (`inserts = false` revient aux vis directes). |
+| Micro-USB en bas | DevKitC tourné, prise vers le bas, juste au-dessus de la cloison. Un canal vertical de 13 mm, entre le SDS011 et la chambre d'air frais, va du bas du boîtier à la prise : la fiche s'enfile par dessous. Sur la carte V2, le centre de la prise doit tomber à `usb_x` (62,6 mm du bord gauche d'une carte de 83 mm centrée). |
+| Cloison thermique | Double mur avec une lame d'air de 3 mm, passages de câbles ronds Ø 7 à boucher au mastic. BME680 en bas de la chambre d'air frais par défaut. Avec la correction réglable dans l'appli (Réglages › Avancé). |
+| Entrée du SDS011 | Pièce `conduit` : tube Ø 8 / 5,6 mm de la paroi droite jusqu'au mur du capteur, joint (mousse adhésive ou joint torique 8 × 1,5) contre le mur autour de la buse, collerette avec grille à l'extérieur. Le capteur n'aspire que l'air extérieur ; sa sortie reste à gauche. Le conduit passe sous le plancher du canal USB. |
+| Clip du support | Lame souple taillée dans le flanc droit du rail (support et pied), avec un bossage qui tombe dans un creux de la rainure en bout de course. |
+| Trou de la bande LED | Oblong 10 × 6 mm dans le dos et le socle (Ø 6 trop juste en V1). |
+| Bouton Wi-Fi | Trou Ø 1,6 dans le capot et guide jusqu'au bouton BOOT : trombone enfoncé 8 s = Wi-Fi remis à zéro. Position à confirmer avec la carte V2 (`boot_dx`, `boot_dy`). |
+| Logo | Trois vagues de l'icône de l'appli gravées sous « SDE ». |
+| Diffuseur | Pièce `diffuseur` en PETG naturel : jupe à 4 mm des flancs du socle, devant la bande, serrée par une lèvre côté mur. |
+
+Les positions de la prise USB et du bouton BOOT dépendent de la carte V2 (en cours sous KiCad) : les régler en tête du fichier une fois la carte dessinée, puis réexporter les STL :
+
+```
+for p in corps capot socle support pied conduit diffuseur; do
+  openscad -o stl-v2/sde-v2-$p.stl -D "piece=\"$p\"" sde-boitier-v2.scad
+done
+```

@@ -76,8 +76,9 @@
 // Fuseau horaire pour l'export CSV (règle POSIX). Québec / Ontario :
 #define TIMEZONE "EST5EDT,M3.2.0,M11.1.0"
 
-// Historique gardé en flash : 30 jours de moyennes à la minute (24 o chacune).
-#define HIST_FLASH_DAYS 30
+// Historique gardé en flash : 20 jours de moyennes à la minute (24 o chacune,
+// ~690 ko) dans la partition LittleFS de 896 ko de la table V2 (partitions.csv).
+#define HIST_FLASH_DAYS 20
 // Écriture en flash toutes les 5 minutes (au pire 5 min perdues si on débranche).
 #define HIST_FLUSH_MS (5UL * 60UL * 1000UL)
 
@@ -88,3 +89,20 @@
 #define CLOUD_LIVE_IDLE_MS 60000   // une mesure par minute quand personne ne regarde
 #define CLOUD_WATCH_MS 90000       // chaque mesure pendant 90 s après une demande de l'appli
 #define CLOUD_CHUNK 2000           // taille d'un morceau d'historique (octets), un toutes les 200 ms
+
+// Alertes sur le téléphone (net/alerts) par ntfy : seuils par défaut,
+// modifiables dans l'appli.
+#define ALERT_NTFY_HOST "ntfy.sh"
+#define ALERT_CO2_PPM_DEFAULT 1200
+#define ALERT_RH_DEFAULT 60
+
+// Correction de température du BME680 (auto-échauffement dans le boîtier),
+// réglable dans l'appli : -10 à +10 °C, l'humidité est recalculée en
+// conséquence. Valeur par défaut à la sortie d'atelier :
+#define TEMP_OFFSET_DEFAULT 0.0f
+
+// Bouton BOOT de l'ESP32 (accessible avec un trombone sous le boîtier V2) :
+// appui de 8 s = oublier le Wi-Fi de la maison et remettre le mot de passe du
+// point d'accès d'usine.
+#define PIN_BUTTON 0
+#define BUTTON_RESET_MS 8000
