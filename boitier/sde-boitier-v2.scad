@@ -2,15 +2,15 @@
 //
 // Changements par rapport à la V1 (sde-boitier.scad) :
 //   - inserts laiton M3 à chaud dans le corps et le socle (bossages élargis) ;
-//   - SDS011 tourné d'un demi-tour à plat : sa buse touche la paroi gauche et
-//     aspire l'air extérieur directement (plus de conduit) ; son connecteur et
-//     sa sortie d'air donnent sur un couloir de 12 mm à droite, où il se branche
-//     enfin (V1 : 0,5 mm, impossible à brancher) ;
-//   - couloir commun entre le SDS011 et la chambre d'air frais : fils du SDS011
-//     vers la carte, câble USB, air rejeté par le ventilateur (fentes du capot) ;
-//   - micro-USB en bas : le DevKitC est tourné, prise vers le bas, juste
-//     au-dessus du couloir ; une rallonge courte descend le couloir jusqu'à une
-//     prise USB-C femelle tenue dans un fourreau sous le boîtier (rien à ouvrir) ;
+//   - SDS011 tourné d'un quart de tour : connecteur et sortie du ventilateur
+//     vers le HAUT, buse vers le BAS. Le câble d'origine se branche droit, sans
+//     soudure, ses fils montent tout droit vers la carte (galerie de 12 mm et
+//     grande ouverture dans la cloison) ; la buse aspire l'air de la pièce
+//     directement sous le boîtier ; l'air rejeté monte et ventile l'électronique
+//     avant de sortir en haut, loin de la chambre d'air frais ;
+//   - micro-USB en bas : le DevKitC est tourné, prise vers le bas, au-dessus de
+//     la chambre d'air frais ; une rallonge courte y descend jusqu'à une prise
+//     USB-C femelle tenue dans un fourreau sous le boîtier (rien à ouvrir) ;
 //   - cloison double (lame d'air de 3 mm) et passages de câbles ronds : la
 //     chaleur de l'ESP32 ne descend plus vers la chambre d'air frais ;
 //     BME680 en bas de la chambre par défaut ;
@@ -22,8 +22,8 @@
 //
 // Pièces (choisir avec la variable `piece`, ou -D piece="corps" en ligne de commande) :
 //   corps    : le boîtier, ouvert à l'avant. Compartiment électronique en haut,
-//              compartiment air en bas : SDS011 à gauche (buse dans la paroi), couloir
-//              des câbles au milieu, chambre d'air frais du BME680 à droite.
+//              compartiment air en bas : SDS011 à gauche (buse vers le bas), chambre
+//              d'air frais du BME680 et prise USB-C à droite.
 //   capot    : la façade avant, vissée sur le corps (6 vis M3 dans des inserts laiton).
 //   socle    : la pièce vissée au dos du corps. Elle porte la bande LED, tournée vers
 //              le mur (effet de halo), et la rainure en queue d'aronde.
@@ -61,10 +61,10 @@ pcb_entretoise = 4;  // hauteur des plots sous le PCB (broches : 2 mm dessous)
 pcb_composants = 20; // plus haut point au-dessus du PCB (mesuré : 19,5)
 kit_bas = 5.9;       // le DevKitC dépasse du bord bas du PCB (STEP, côté antenne)
 
-/* [Port micro-USB de l'ESP32 : prise vers le bas, au-dessus du couloir] */
+/* [Port micro-USB de l'ESP32 : prise vers le bas, au-dessus de la chambre] */
 usb_z = 13;          // centre du connecteur au-dessus du PCB (mesuré en V1, DevKitC sur barrettes femelles)
 // Prise USB-C sous le boîtier : rallonge courte (10-20 cm) micro-USB mâle -> USB-C
-// femelle, bout femelle moulé SANS oreilles, glissé dans un fourreau au bas du couloir.
+// femelle, bout femelle moulé SANS oreilles, glissé dans un fourreau en bas à gauche de la chambre d'air frais.
 // Cotes du bout femelle à confirmer au pied à coulisse, puis réexporter le corps.
 usbc_corps = [7.0, 13.0];   // section du bout femelle moulé : épaisseur (X) x largeur (Z)
 usbc_haut = 18;             // hauteur du fourreau
@@ -82,15 +82,16 @@ sds_y = 69.5;        // hauteur (Y)
 sds_z = 20;          // épaisseur (Z)
 sds_cale = 3;        // plots sous le capteur
 sds_jeu = 0.5;       // jeu autour du capteur dans son logement
-couloir = 12;        // couloir à droite du capteur : connecteur, fils, câble USB, air rejeté
-// Le capteur est tourné de 180° à plat par rapport à sa fiche : buse à GAUCHE,
-// connecteur et sortie du ventilateur à DROITE. Cotes ci-dessous dans le sens de la fiche.
-// Buse d'entrée, sur la face droite de la fiche (gauche une fois tourné)
+galerie = 12;        // espace au-dessus du capteur : fiche du connecteur, fils, air rejeté
+// Le capteur est tourné d'un quart de tour (sens horaire, vu de face) par rapport à
+// sa fiche : face gauche (connecteur, sortie du ventilateur) en HAUT, face droite
+// (buse) en BAS. Cotes ci-dessous dans le sens de la fiche.
+// Buse d'entrée, sur la face droite de la fiche (en bas une fois tourné)
 buse_d = 5;          // diamètre extérieur
 buse_haut = 20;      // centre de la buse depuis le bord du haut
 buse_z = 5.5;        // centre de la buse au-dessus de la base
 buse_sort = 1.5;     // la buse dépasse de la plaque de base de cette valeur
-// Sortie du ventilateur, sur la face gauche de la fiche (droite une fois tourné)
+// Sortie du ventilateur, sur la face gauche de la fiche (en haut une fois tourné)
 sortie_l = 22;       // longueur (Y)
 sortie_h = 8;        // hauteur (Z)
 sortie_y = 12;       // bas de l'ouverture depuis le bord du bas du capteur
@@ -106,7 +107,8 @@ bme_trou_dx = 11;    // entraxe des 2 trous (Ø 3)
 bme_trou_y = 6;      // centre des trous depuis le bord du bas du module, côté puce (mesuré)
 bme_vis_d = 2.2;     // avant-trou pour vis M2,5 autotaraudeuse
 bme_bas = true;      // V2 : BME680 en bas de la chambre, loin de l'ESP32 (fil de 15 cm)
-chambre = 22;        // largeur intérieure de la chambre d'air frais (module de 16 mm + 3 mm d'air de chaque côté)
+chambre = 29;        // largeur intérieure de la chambre d'air frais (prise USB-C à gauche, BME680 à droite) ;
+                     // fixe aussi la largeur : la carte de 83 mm doit passer entre les bossages du haut
 
 /* [Bande LED et socle] */
 socle_ep = 18;       // distance dos du boîtier -> plaque murale (profondeur du halo)
@@ -155,7 +157,7 @@ cloison_air = 3;     // lame d'air entre les deux murs de la cloison
 cloison = 2 * cloison_mur + cloison_air;
 mur = 1.6;           // mur entre le SDS011 et la chambre
 
-int_l = sds_jeu + sds_x + jeu + couloir + mur + chambre;   // largeur intérieure
+int_l = sds_jeu + sds_x + jeu + mur + chambre;   // largeur intérieure
 L = int_l + 2 * paroi;
 
 // Compartiment air : le SDS011 passe entre les bossages du bas et ceux de la cloison
@@ -164,7 +166,7 @@ sds_y0 = bos_int + 0.4;
 sds_z0 = dos_ep + sds_cale;
 sds_x1 = sds_x0 + sds_x;
 sds_y1 = sds_y0 + sds_y;
-y_cloison = sds_y1 + sds_jeu + bossage - 1;      // bas de la cloison (bossage de cloison au-dessus du capteur)
+y_cloison = sds_y1 + galerie;                    // bas de la cloison (galerie au-dessus du capteur)
 bas_h = y_cloison - paroi;
 
 // Compartiment électronique : DevKitC qui dépasse en bas (prise USB vers le bas), PCB à 0,5 mm de la paroi du haut
@@ -177,29 +179,28 @@ capot_ep = 2.4;
 y_haut0 = y_cloison + cloison;
 y_haut1 = H - paroi;
 
-// Couloir (connecteur du SDS011, fils, câble USB, air rejeté), mur et chambre d'air frais
-cou_x0 = sds_x1 + jeu;
-cou_x1 = cou_x0 + couloir;
-mur_x = cou_x1;
+// Mur et chambre d'air frais ; prise USB-C dans le coin bas-gauche de la chambre
+mur_x = sds_x1 + jeu;
 ch_x0 = mur_x + mur;
 ch_x1 = L - paroi;
-usb_x = (cou_x0 + cou_x1) / 2;              // centre de la prise du DevKitC (X)
+usb_x = ch_x0 + usbc_corps[0] / 2 + 0.2 + usbc_paroi + 0.6;   // centre de la prise du DevKitC et de la prise USB-C (X)
 usb_zc = dos_ep + pcb_entretoise + pcb_ep + usb_z;
-// Capteur tourné de 180° : (x, y) de la fiche -> (sds_x - x, sds_y - y)
-sds_trous = [for (t = sds_trous_fiche) [sds_x - t[0], sds_y - t[1]]];
-buse_y = sds_y0 + buse_haut;                // buse à 20 mm du BAS une fois tourné
+// Capteur tourné d'un quart de tour : (x, y) de la fiche -> (y, sds_x - x)
+sds_trous = [for (t = sds_trous_fiche) [t[1], sds_x - t[0]]];
+buse_x = sds_x0 + sds_y - buse_haut;        // buse sous le capteur, à 49,5 mm de son bord gauche
 buse_zc = sds_z0 + buse_z;
-sortie_y0 = sds_y0 + sds_y - sortie_y - sortie_l;
-usbc_z0 = dos_ep + 1;                       // fond du logement de la prise USB-C   // bas de la sortie d'air (face droite)
+sortie_x0 = sds_x0 + sortie_y;              // sortie d'air sur le dessus du capteur
+usbc_z0 = dos_ep + 1;                       // fond du logement de la prise USB-C
 encoche = buse_d + 0.4;   // encoche de la paroi gauche pour la buse (ouverte vers l'avant, fermée par la languette du capot)
 
 // BME680 (vis en bas du module, fil en haut)
-bme_x0 = ch_x0 + 2;
+bme_x0 = ch_x1 - 2 - bme_l;   // à droite de la chambre (la rallonge USB monte à gauche)
 bme_y0 = bme_bas ? paroi + 12 : y_cloison - 2 - bme_h;
 bme_trous = [for (s = [-1, 1]) [bme_x0 + bme_l / 2 + s * bme_trou_dx / 2, bme_y0 + bme_trou_y]];
+fente_x = usb_x;        // fente de la cloison : la fiche micro-USB de la rallonge la traverse
 
-// PCB, centré
-pcb_x0 = (L - pcb_l) / 2;   // la carte V2 place la prise du DevKitC à usb_x (voir LISEZMOI)
+// PCB
+pcb_x0 = bos_int + 1;      // calée à gauche : le DevKitC (à droite) reste sur la carte   // la carte V2 place la prise du DevKitC à usb_x (voir LISEZMOI)
 pcb_y0 = y_haut1 - 0.5 - pcb_h;
 pcb_z0 = dos_ep + pcb_entretoise;
 
@@ -274,11 +275,13 @@ module corps() {
         translate([paroi, y_cloison, 0]) cube([int_l, cloison, P]);
         translate([paroi + 3, y_cloison + cloison_mur, dos_ep]) cube([int_l - 6, cloison_air, P]);
       }
-      // Fourreau de la prise USB-C, au bas du couloir
+      // Fourreau de la prise USB-C, en bas à gauche de la chambre
       translate([usb_x - usbc_corps[0] / 2 - 0.2 - usbc_paroi, paroi - 0.01, 0])
         cube([usbc_corps[0] + 0.4 + 2 * usbc_paroi, usbc_haut + usbc_levre, usbc_z0 + usbc_corps[1] + 0.4 + 1.5]);
-      // Mur entre le couloir et la chambre d'air frais
+      // Mur entre le SDS011 et la chambre d'air frais
       translate([mur_x, paroi - 0.01, 0]) cube([mur, bas_h + 0.02, P]);
+      // Bloc de la buse, sous le capteur
+      translate([buse_x - encoche / 2 - 1.6, paroi - 0.01, 0]) cube([encoche + 3.2, sds_y0 - sds_jeu - paroi, P]);
       // Bossages des vis du capot
       for (v = vis_capot) translate([v[0], v[1], 0]) cylinder(r = bossage, h = P);
       // Plots du PCB
@@ -295,24 +298,26 @@ module corps() {
     for (t = pcb_trous) translate([pcb_x0 + t[0], pcb_y0 + t[1], 1]) cylinder(d = pcb_vis_d, h = pcb_z0);
     for (t = sds_trous) translate([sds_x0 + t[0], sds_y0 + t[1], 1]) cylinder(d = sds_vis_d, h = 30);
     for (t = bme_trous) translate([t[0], t[1], 1]) cylinder(d = bme_vis_d, h = 30);
-    // Buse du SDS011 : encoche en U dans la paroi gauche, ouverte vers l'avant
-    // (fermée par la languette du capot) ; le capteur aspire l'air de la pièce
-    translate([-1, buse_y, buse_zc]) rotate([0, 90, 0]) cylinder(d = encoche, h = paroi + 2);
-    translate([-1, buse_y - encoche / 2, buse_zc]) cube([paroi + 2, encoche, P]);
-    // Couloir : grande ouverture dans la cloison (fiche USB, fils du SDS011),
-    // ouverte vers l'avant et fermée par le capot
-    translate([cou_x0, y_cloison - 1, dos_ep]) cube([couloir, cloison + 2, P]);
+    // Buse du SDS011 : encoche en U du bas du capteur jusque sous le boîtier,
+    // ouverte vers l'avant (fermée par la languette du capot) ; le capteur
+    // aspire l'air de la pièce directement
+    translate([buse_x, -1, buse_zc]) rotate([-90, 0, 0]) cylinder(d = encoche, h = sds_y0 + 1);
+    translate([buse_x - encoche / 2, -1, buse_zc]) cube([encoche, sds_y0 + 1, P]);
+    // Grande ouverture de la cloison au-dessus du SDS011 (fils du connecteur, air
+    // rejeté qui ventile l'électronique), ouverte vers l'avant, fermée par le capot
+    translate([bos_int + 1, y_cloison - 1, dos_ep]) cube([sds_x1 - bos_int - 2, cloison + 2, P]);
     // Prise USB-C : fourreau ouvert vers l'avant (la prise s'y glisse avant de
     // fermer le capot, un point de colle chaude la tient) et bouche sous le boîtier
     translate([usb_x - (usbc_corps[0] + 0.4) / 2, paroi + usbc_levre - paroi, usbc_z0])
       cube([usbc_corps[0] + 0.4, usbc_haut + paroi + 1, P]);
     translate([usb_x, -1, usbc_z0 + 0.2 + usbc_corps[1] / 2]) rotate([-90, 0, 0])
       oblong(usbc_bouche[0], usbc_bouche[1], paroi + usbc_levre + 1.01);
-    // Fils du BME680 : fente dans la cloison où passe une fiche JST 4 broches
-    // (XH : 12,4 x 5,8 mm), à boucher au mastic une fois les fils passés
-    translate([ch_x0 + 7, y_cloison - 1, dos_ep + 6]) rotate([-90, 0, 0]) oblong(12.6, 7, cloison + 2);
-    // Chambre d'air frais : fentes en bas et sur la droite
-    for (i = [0 : 3]) translate([ch_x0 + 3.5 + i * 4.6, -1, dos_ep + 3]) cube([2, paroi + 2, int_p - 6]);
+    // Rallonge USB et fils du BME680 : fente dans la cloison où passent la fiche
+    // micro-USB (11 x 7) et une fiche JST 4 broches (XH : 12,4 x 5,8), à boucher
+    // au mastic une fois les fils passés
+    translate([fente_x - 6.5, y_cloison - 1, usb_zc - 4]) cube([13, cloison + 2, 8]);
+    // Chambre d'air frais : fentes en bas (à droite de la prise) et sur la droite
+    for (i = [0 : 2]) translate([ch_x0 + 11 + i * 4, -1, dos_ep + 3]) cube([2, paroi + 2, int_p - 6]);
     for (i = [0 : 5]) let(y = bos_int + 4 + i * (bas_h - 2 * bos_int) / 5)
       fente_laterale(L - paroi, y, dos_ep + 4, int_p - 8, -1);
     // Aération du compartiment électronique : entrée en bas, sortie en haut, des deux côtés
@@ -334,17 +339,18 @@ module corps() {
 }
 
 module guides_sds() {
-  // Butées en haut et en bas du capteur (la paroi gauche et le mur le tiennent sur les côtés)
+  // Butées sous le capteur (la paroi gauche et le mur le tiennent sur les côtés ;
+  // rien au-dessus, où se trouvent le connecteur et la sortie d'air)
   e = 10; t = 1.6; hz = sds_z0 + 8;
-  for (x = [sds_x0 + 6, sds_x1 - 6 - e]) {
-    translate([x, sds_y0 - sds_jeu - t, 0]) cube([e, t, hz]);
-    translate([x, sds_y1 + sds_jeu, 0]) cube([e, t, hz]);
-  }
+  for (x = [sds_x0 + 6, sds_x0 + 24]) translate([x, sds_y0 - sds_jeu - t, 0]) cube([e, t, hz]);
 }
 
 // Vérifications : la fente du BME680 évite le bossage de la cloison à droite
-assert(ch_x0 + 7 + 12.6 / 2 < L - bos_int, "fente du BME680 sur le bossage");
-assert(usbc_corps[0] + 0.4 + 2 * usbc_paroi <= couloir, "fourreau USB-C plus large que le couloir");
+assert(fente_x + 13 / 2 < L - bos_int, "fente de la cloison sur le bossage");
+assert(fente_x - 13 / 2 > mur_x, "fente de la cloison au-dessus du SDS011");
+assert(bme_x0 > usb_x + 4, "BME680 sur le passage de la rallonge");
+assert(pcb_x0 + pcb_l < L - bos_int, "la carte touche les bossages du haut");
+assert(usb_x + 27.94 / 2 < pcb_x0 + pcb_l - 1, "le DevKitC dépasse de la carte");
 
 // ------------------------------------------------------------------ Capot
 
@@ -358,8 +364,8 @@ module capot() {
     }
     // Fentes devant la chambre d'air frais
     for (i = [0 : 10]) translate([ch_x0 + 3, bos_int + 2 + i * 6.5, -1]) rrect3(chambre - 6, 2.2, capot_ep + 2);
-    // Fentes devant le couloir : l'air rejeté par le ventilateur du SDS011 ressort ici
-    for (i = [0 : 7]) translate([cou_x0 + 2, sortie_y0 - 14 + i * 6.5, -1]) rrect3(couloir - 4, 2.2, capot_ep + 2);
+    // Fentes devant la galerie, au-dessus du SDS011 : une partie de l'air rejeté ressort ici
+    for (i = [0 : 4], j = [0 : 1]) translate([sds_x0 + 8 + i * 11.5, sds_y1 + 3 + j * 4.5, -1]) rrect3(8, 2.2, capot_ep + 2);
     // Fentes hautes du compartiment électronique (sortie d'air chaud)
     for (i = [0 : 5]) translate([L / 2 - 30 + i * 11, y_haut1 - 8, -1]) rrect3(6, 2.2, capot_ep + 2);
     // Logo en creux : « SDE » et les trois vagues de l'appli dessous
@@ -376,10 +382,10 @@ module capot() {
     cylinder(d = 4.4, h = guide + 0.01);
     translate([0, 0, -1]) cylinder(d = 1.6, h = guide + 2);
   }
-  // Languette qui ferme l'encoche de la buse dans la paroi gauche
+  // Languette qui ferme l'encoche de la buse, sous le capteur
   difference() {
-    translate([0.2, buse_y - encoche / 2 + 0.25, buse_zc - P]) cube([paroi - 0.4, encoche - 0.5, P - buse_zc + 0.01]);
-    translate([-1, buse_y, buse_zc - P]) rotate([0, 90, 0]) cylinder(d = buse_d + 0.3, h = paroi + 2);
+    translate([buse_x - encoche / 2 + 0.25, 0.2, buse_zc - P]) cube([encoche - 0.5, sds_y0 - sds_jeu - 0.4, P - buse_zc + 0.01]);
+    translate([buse_x, -1, buse_zc - P]) rotate([-90, 0, 0]) cylinder(d = buse_d + 0.3, h = sds_y0 + 1);
   }
 }
 
@@ -572,20 +578,20 @@ module bande() {
 module fantomes() {
   // SDS011, sa buse et sa sortie
   color("DarkSlateGray", 0.8) translate([sds_x0, sds_y0, sds_z0]) cube([sds_x, sds_y, sds_z]);
-  color("Black") translate([sds_x0 - buse_sort, buse_y, buse_zc]) rotate([0, 90, 0]) cylinder(d = buse_d, h = 8.5 + buse_sort);
-  color("Red", 0.8) translate([sds_x1, sortie_y0, sds_z0 + sortie_z]) cube([0.3, sortie_l, sortie_h]);
+  color("Black") translate([buse_x, sds_y0 - buse_sort, buse_zc]) rotate([-90, 0, 0]) cylinder(d = buse_d, h = 8.5 + buse_sort);
+  color("Red", 0.8) translate([sortie_x0, sds_y1, sds_z0 + sortie_z]) cube([sortie_l, 0.3, sortie_h]);
   // PCB, DevKitC et MH-Z19B (positions du STEP tournées de 180°), sur connecteurs femelles de 8,5 mm
   color("ForestGreen", 0.8) translate([pcb_x0, pcb_y0, pcb_z0]) cube([pcb_l, pcb_h, pcb_ep]);
-  // DevKitC prise vers le bas, au-dessus du couloir (carte V2 à dessiner en conséquence)
+  // DevKitC prise vers le bas, au-dessus de la chambre (carte V2 à dessiner en conséquence)
   color("RoyalBlue", 0.8) translate([usb_x - 27.94 / 2, kit_y0, pcb_z0 + pcb_ep + 8.5]) cube([27.94, 55.1, 1.6]);
   color("Silver") translate([usb_x - 4, kit_y0 - 0.5, usb_zc - 1.5]) cube([8, 5.5, 3]);
   color("Red") translate([boot[0], boot[1], pcb_z0 + pcb_ep + boot_haut - 2]) cylinder(d = 3, h = 2);
-  // Rallonge : fiche micro-USB dans le DevKitC, câble dans le couloir, prise USB-C dans son fourreau
-  color("Black", 0.6) translate([usb_x - 5.5, kit_y0 - 0.5 - 15, usb_zc - 3.5]) cube([11, 15, 7]);
+  // Rallonge : fiche micro-USB dans le DevKitC, câble dans la chambre, prise USB-C dans son fourreau
+  color("Black", 0.6) translate([usb_x - 5.5, kit_y0 - 0.5 - 9, usb_zc - 3.5]) cube([11, 9, 7]);
   color("Black", 0.6) translate([usb_x - usbc_corps[0] / 2, usbc_levre, usbc_z0 + 0.2]) cube([usbc_corps[0], usbc_haut + 3, usbc_corps[1]]);
   color("Black", 0.6) hull() {
     translate([usb_x, usbc_levre + usbc_haut + 3, usbc_z0 + 0.2 + usbc_corps[1] / 2]) sphere(d = 3.2);
-    translate([usb_x, kit_y0 - 15.5, usb_zc]) sphere(d = 3.2);
+    translate([usb_x, kit_y0 - 9.5, usb_zc]) sphere(d = 3.2);
   }
   // BME680
   color("Purple", 0.8) translate([bme_x0, bme_y0, dos_ep + 5]) cube([bme_l, bme_h, 1.6]);
