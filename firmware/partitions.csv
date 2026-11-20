@@ -1,0 +1,9 @@
+# Table de partitions V2 (flash 4 Mo) : programme de 1,5 Mo au lieu de 1,25 Mo.
+# Changer de table demande un flash par USB (image merged à l'adresse 0x0).
+# Name,   Type, SubType, Offset,   Size
+nvs,      data, nvs,     0x9000,   0x5000
+otadata,  data, ota,     0xe000,   0x2000
+app0,     app,  ota_0,   0x10000,  0x180000
+app1,     app,  ota_1,   0x190000, 0x180000
+spiffs,   data, spiffs,  0x310000, 0xE0000
+coredump, data, coredump,0x3F0000, 0x10000

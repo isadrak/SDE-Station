@@ -23,15 +23,21 @@ node tools/gen_assets.js
 # Croquis Arduino : un .ino vide + le dossier src/
 rm -rf build && mkdir -p build/sketch/sde && touch build/sketch/sde/sde.ino
 cp -r src build/sketch/sde/src
+# Table de partitions V2 (programme de 1,5 Mo), prise en compte par arduino-cli ;
+# upload.maximum_size relève la limite de taille de la carte « esp32 » (1,25 Mo par défaut).
+cp partitions.csv build/sketch/sde/
 arduino-cli compile --fqbn $FQBN --output-dir build/out \
-  --build-property "compiler.cpp.extra_flags=-DSDE_FW_VERSION=\"$VER\"" build/sketch/sde
+  --build-property "compiler.cpp.extra_flags=-DSDE_FW_VERSION=\"$VER\"" \
+  --build-property "upload.maximum_size=1572864" build/sketch/sde
 
 mkdir -p dist
 cp build/out/sde.ino.bin dist/sde-firmware-$VER-ota.bin
-# La partition app0/app1 fait 1 310 720 octets : un fichier plus gros serait refusé par la mise à jour.
+# La partition app0/app1 fait 1 572 864 octets (partitions.csv) : un fichier plus gros serait refusé par la mise à jour.
+# Une station encore en table V1 (1 310 720 octets) doit d'abord être flashée par USB.
 SIZE=$(stat -c %s build/out/sde.ino.bin)
-if [ "$SIZE" -gt 1310720 ]; then echo "error: firmware trop gros ($SIZE > 1310720 octets)"; exit 1; fi
-echo "Firmware : $SIZE / 1310720 octets ($((1310720 - SIZE)) libres)"
+if [ "$SIZE" -gt 1572864 ]; then echo "error: firmware trop gros ($SIZE > 1572864 octets)"; exit 1; fi
+echo "Firmware : $SIZE / 1572864 octets ($((1572864 - SIZE)) libres)"
+if [ "$SIZE" -gt 1310720 ]; then echo "warning: plus gros que la table V1 : flash USB obligatoire sur une station en 0.9.x"; fi
 python3 -m esptool --chip esp32 merge_bin -o dist/sde-firmware-$VER-merged.bin \
   --flash_mode keep --flash_freq keep --flash_size keep \
   0x1000 build/out/sde.ino.bootloader.bin 0x8000 build/out/sde.ino.partitions.bin \

@@ -1,0 +1,8 @@
+{
+  "name": "sde-atelier",
+  "private": true,
+  "type": "module",
+  "description": "Mise en service d'une station SDE à l'atelier : accès à distance, alertes et fiche client",
+  "scripts": { "provision": "node provision.mjs" },
+  "dependencies": { "qrcode": "1.5.4" }
+}

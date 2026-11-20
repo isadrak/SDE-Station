@@ -7,6 +7,10 @@ class MHZ19B {
   explicit MHZ19B(HardwareSerial& port) : port_(port) {}
 
   void begin(int rxPin, int txPin);
+  // Libère les broches (essai d'un MH-Z1911A en I2C sur le même connecteur),
+  // puis les reprend.
+  void end() { port_.end(); }
+  void reopen() { openPort(); }
 
   // Lit la concentration. Retourne true si la trame est valide.
   bool read(uint16_t& co2ppm, int8_t& tempC);
@@ -27,6 +31,7 @@ class MHZ19B {
   int8_t readAutoCalibration();
 
   bool isOk() const { return failures_ < 3 && everRead_; }
+  bool everRead() const { return everRead_; }
   // RX et TX inversés par rapport au brochage prévu (détecté automatiquement)
   bool isSwapped() const { return swapped_; }
   // Octets reçus lors de la dernière lecture (0 = aucune réponse du tout)
