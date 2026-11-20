@@ -492,10 +492,20 @@ module support() {
 // S'imprime base sur le plateau (la pièce « pied » est exportée dans ce sens).
 
 pied_h = pied_leve + plaque_h;
+// Passage du câble USB-C à travers la plaque du pied : le câble descend de la
+// prise, passe sous le boîtier et part directement vers l'arrière
+pied_passe_x = 20;    // centre du passage (la prise est à usb_x - L/2 du centre ; le câble se courbe de quelques mm)
+pied_passe = [10, 14]; // largeur, hauteur au-dessus de la base
 module pied() intersection() {
   translate([-500, 0, -500]) cube(1000);   // rien sous la table
-  pied_brut();
+  difference() {
+    pied_brut();
+    rotate([-pied_incl, 0, 0]) translate([pied_passe_x - pied_passe[0] / 2, pied_ep - 1, -1])
+      linear_extrude(pied_ep + 2) rrect(pied_passe[0], pied_passe[1] + 1, 3);
+  }
 }
+assert(pied_passe_x + pied_passe[0] / 2 < plaque_l / 2 - 5, "passage du câble sur l'équerre du pied");
+assert(pied_passe_x - pied_passe[0] / 2 > rail_base / 2, "passage du câble sous le rail");
 module pied_brut() {
   // Plaque inclinée et rail (même rail que le support mural)
   rotate([-pied_incl, 0, 0]) {
