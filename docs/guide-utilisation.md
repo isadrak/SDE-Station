@@ -28,7 +28,7 @@ Si Windows ne voit pas l'ESP32, installe le pilote « CP210x USB to UART » de S
 
 ## 2. Utiliser la station en Wi-Fi
 
-Branche la station sur n'importe quel chargeur USB 5 V (1 A ou plus, à cause du ventilateur du SDS011).
+Branche la station sur n'importe quel chargeur USB 5 V (1 A ou plus, à cause du ventilateur du SDS011). Sur la V2, le câble USB-C se branche dans la prise sous le boîtier, sans l'ouvrir.
 
 **Connexion directe (partout, sans box) :**
 1. Sur ton téléphone ou ton ordinateur, connecte-toi au Wi-Fi **SDE-XXXX** (les 4 derniers caractères changent d'une carte à l'autre). Mot de passe par défaut : **sde-station**.

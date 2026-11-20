@@ -101,7 +101,7 @@ async function main() {
   const ntfyUrl = topic ? `https://ntfy.sh/${topic}` : null;
 
   const blocks = [
-    ["1. Brancher la station", null, "Branchez la station sur un chargeur USB (1 A ou plus). Elle mesure tout de suite ; le CO2 est prêt après 3 minutes."],
+    ["1. Brancher la station", null, "Branchez un câble USB-C dans la prise sous la station, puis sur un chargeur USB (1 A ou plus). Elle mesure tout de suite ; le CO2 est prêt après 3 minutes."],
     ["2. La relier au Wi-Fi de la maison", await qr(wifiQr), `Scannez ce code (Wi-Fi « ${esc(id)} », mot de passe « sde-station »), ouvrez <b>http://192.168.4.1</b>, puis Réglages › Wi-Fi › Connecter.`],
     ["3. Voir la station de partout", await qr(appUrl), "Scannez ce code sur votre téléphone : l'appli s'ouvre déjà reliée à votre station. Ajoutez-la à l'écran d'accueil (Partager › Sur l'écran d'accueil)."],
   ];

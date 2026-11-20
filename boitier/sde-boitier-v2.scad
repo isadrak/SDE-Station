@@ -9,7 +9,8 @@
 //   - couloir commun entre le SDS011 et la chambre d'air frais : fils du SDS011
 //     vers la carte, câble USB, air rejeté par le ventilateur (fentes du capot) ;
 //   - micro-USB en bas : le DevKitC est tourné, prise vers le bas, juste
-//     au-dessus du couloir ; le câble descend le couloir et sort sous le boîtier ;
+//     au-dessus du couloir ; une rallonge courte descend le couloir jusqu'à une
+//     prise USB-C femelle tenue dans un fourreau sous le boîtier (rien à ouvrir) ;
 //   - cloison double (lame d'air de 3 mm) et passages de câbles ronds : la
 //     chaleur de l'ESP32 ne descend plus vers la chambre d'air frais ;
 //     BME680 en bas de la chambre par défaut ;
@@ -62,7 +63,14 @@ kit_bas = 5.9;       // le DevKitC dépasse du bord bas du PCB (STEP, côté ant
 
 /* [Port micro-USB de l'ESP32 : prise vers le bas, au-dessus du couloir] */
 usb_z = 13;          // centre du connecteur au-dessus du PCB (mesuré en V1, DevKitC sur barrettes femelles)
-cable_d = 4.5;       // passage du câble USB sous le boîtier (encoche ouverte vers l'avant)
+// Prise USB-C sous le boîtier : rallonge courte (10-20 cm) micro-USB mâle -> USB-C
+// femelle, bout femelle moulé SANS oreilles, glissé dans un fourreau au bas du couloir.
+// Cotes du bout femelle à confirmer au pied à coulisse, puis réexporter le corps.
+usbc_corps = [7.0, 13.0];   // section du bout femelle moulé : épaisseur (X) x largeur (Z)
+usbc_haut = 18;             // hauteur du fourreau
+usbc_levre = 0.6;           // lèvre en bas : retient la prise, la bouche affleure presque
+usbc_bouche = [4.2, 10.2];  // ouverture de la lèvre : coque de la fiche USB-C (2,6 x 8,4) + jeu
+usbc_paroi = 1.2;
 // Bouton BOOT du DevKitC, à côté de la prise (côté droit, prise vers le bas, vu de face)
 boot_dx = 8.5;       // depuis le centre de la prise (X) : DevKitC V4, EN à gauche et BOOT à droite de la prise vue de face ; à confirmer
 boot_dy = 4.5;       // depuis le bas du DevKitC (Y)
@@ -181,7 +189,8 @@ usb_zc = dos_ep + pcb_entretoise + pcb_ep + usb_z;
 sds_trous = [for (t = sds_trous_fiche) [sds_x - t[0], sds_y - t[1]]];
 buse_y = sds_y0 + buse_haut;                // buse à 20 mm du BAS une fois tourné
 buse_zc = sds_z0 + buse_z;
-sortie_y0 = sds_y0 + sds_y - sortie_y - sortie_l;   // bas de la sortie d'air (face droite)
+sortie_y0 = sds_y0 + sds_y - sortie_y - sortie_l;
+usbc_z0 = dos_ep + 1;                       // fond du logement de la prise USB-C   // bas de la sortie d'air (face droite)
 encoche = buse_d + 0.4;   // encoche de la paroi gauche pour la buse (ouverte vers l'avant, fermée par la languette du capot)
 
 // BME680 (vis en bas du module, fil en haut)
@@ -265,6 +274,9 @@ module corps() {
         translate([paroi, y_cloison, 0]) cube([int_l, cloison, P]);
         translate([paroi + 3, y_cloison + cloison_mur, dos_ep]) cube([int_l - 6, cloison_air, P]);
       }
+      // Fourreau de la prise USB-C, au bas du couloir
+      translate([usb_x - usbc_corps[0] / 2 - 0.2 - usbc_paroi, paroi - 0.01, 0])
+        cube([usbc_corps[0] + 0.4 + 2 * usbc_paroi, usbc_haut + usbc_levre, usbc_z0 + usbc_corps[1] + 0.4 + 1.5]);
       // Mur entre le couloir et la chambre d'air frais
       translate([mur_x, paroi - 0.01, 0]) cube([mur, bas_h + 0.02, P]);
       // Bossages des vis du capot
@@ -290,8 +302,12 @@ module corps() {
     // Couloir : grande ouverture dans la cloison (fiche USB, fils du SDS011),
     // ouverte vers l'avant et fermée par le capot
     translate([cou_x0, y_cloison - 1, dos_ep]) cube([couloir, cloison + 2, P]);
-    // Câble USB : encoche sous le couloir, ouverte vers l'avant
-    translate([usb_x - cable_d / 2, -1, usb_zc - cable_d / 2]) cube([cable_d, paroi + 2, P]);
+    // Prise USB-C : fourreau ouvert vers l'avant (la prise s'y glisse avant de
+    // fermer le capot, un point de colle chaude la tient) et bouche sous le boîtier
+    translate([usb_x - (usbc_corps[0] + 0.4) / 2, paroi + usbc_levre - paroi, usbc_z0])
+      cube([usbc_corps[0] + 0.4, usbc_haut + paroi + 1, P]);
+    translate([usb_x, -1, usbc_z0 + 0.2 + usbc_corps[1] / 2]) rotate([-90, 0, 0])
+      oblong(usbc_bouche[0], usbc_bouche[1], paroi + usbc_levre + 1.01);
     // Fils du BME680 : fente dans la cloison où passe une fiche JST 4 broches
     // (XH : 12,4 x 5,8 mm), à boucher au mastic une fois les fils passés
     translate([ch_x0 + 7, y_cloison - 1, dos_ep + 6]) rotate([-90, 0, 0]) oblong(12.6, 7, cloison + 2);
@@ -328,6 +344,7 @@ module guides_sds() {
 
 // Vérifications : la fente du BME680 évite le bossage de la cloison à droite
 assert(ch_x0 + 7 + 12.6 / 2 < L - bos_int, "fente du BME680 sur le bossage");
+assert(usbc_corps[0] + 0.4 + 2 * usbc_paroi <= couloir, "fourreau USB-C plus large que le couloir");
 
 // ------------------------------------------------------------------ Capot
 
@@ -563,8 +580,13 @@ module fantomes() {
   color("RoyalBlue", 0.8) translate([usb_x - 27.94 / 2, kit_y0, pcb_z0 + pcb_ep + 8.5]) cube([27.94, 55.1, 1.6]);
   color("Silver") translate([usb_x - 4, kit_y0 - 0.5, usb_zc - 1.5]) cube([8, 5.5, 3]);
   color("Red") translate([boot[0], boot[1], pcb_z0 + pcb_ep + boot_haut - 2]) cylinder(d = 3, h = 2);
-  // Fiche micro-USB qui descend dans le couloir
-  color("Black", 0.6) translate([usb_x - 5.5, kit_y0 - 0.5 - 20, usb_zc - 3.5]) cube([11, 20, 7]);
+  // Rallonge : fiche micro-USB dans le DevKitC, câble dans le couloir, prise USB-C dans son fourreau
+  color("Black", 0.6) translate([usb_x - 5.5, kit_y0 - 0.5 - 15, usb_zc - 3.5]) cube([11, 15, 7]);
+  color("Black", 0.6) translate([usb_x - usbc_corps[0] / 2, usbc_levre, usbc_z0 + 0.2]) cube([usbc_corps[0], usbc_haut + 3, usbc_corps[1]]);
+  color("Black", 0.6) hull() {
+    translate([usb_x, usbc_levre + usbc_haut + 3, usbc_z0 + 0.2 + usbc_corps[1] / 2]) sphere(d = 3.2);
+    translate([usb_x, kit_y0 - 15.5, usb_zc]) sphere(d = 3.2);
+  }
   // BME680
   color("Purple", 0.8) translate([bme_x0, bme_y0, dos_ep + 5]) cube([bme_l, bme_h, 1.6]);
 }
