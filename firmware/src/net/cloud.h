@@ -37,5 +37,7 @@ void status(JsonObject out);
 // de ~40 ko de tas, autant que la connexion MQTT), puis reconnecte.
 void yieldTls(uint32_t ms);
 bool tlsActive();
+// -1 inconnu, 0 abonnement au classement refusé par le serveur, 1 accepté.
+int rankSubscription();
 
 }  // namespace cloud

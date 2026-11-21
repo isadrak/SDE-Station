@@ -162,6 +162,18 @@ L'application de la station (`http://sde.local`) passe aussi toute seule par le 
 
 **Consommation :** l'offre gratuite d'EMQX donne 1 Go de trafic et 1 million de minutes de connexion par mois. La station connectée en permanence en utilise environ 45 000. Quand personne ne regarde, elle envoie une mesure et son état une fois par minute (environ 60 Mo par mois) ; quand l'appli est ouverte, chaque mesure (environ 2 Mo par heure d'appli ouverte). Ça laisse une bonne marge.
 
+## 11. Classement CO2 entre stations (firmware 0.10.1 et plus)
+
+L'onglet **Classement** met en compétition toutes les stations SDE qui participent : la moyenne de CO2 la plus basse sur les 30 derniers jours gagne.
+
+- **Participer** : choisir un pseudo (2 à 20 caractères) dans l'onglet Classement. La station rejoint alors le classement, même appli fermée. Il faut l'accès à distance (section 10). « Quitter le classement » retire le résumé du serveur.
+- **Ce qui est partagé** : le pseudo, les moyennes de CO2 (30 jours, 30 jours arrêtés à minuit, 7 jours, aujourd'hui), le nombre de jours mesurés, la série, les XP et l'heure et l'ampleur des 3 plus grosses aérations du jour. Jamais le nom de la pièce ni les autres mesures.
+- **Classement** : moyenne minute par minute sur 30 jours (20 jours en mémoire sur la V2). Une station est classée après 3 jours d'au moins 6 h de mesures, et disparaît si elle ne publie plus rien pendant 48 h.
+- **Séries, XP et niveaux** : un bon jour est une journée dont la moyenne reste sous 970 ppm (catégorie I d'EN 16798-1, la note 5 du CO2). Il rapporte 100 XP, multipliés par 2 après 7 bons jours d'affilée, par 4 après 14 et par 8 après 21. Un jour au-dessus remet la série à zéro, un jour avec moins de 6 h de mesures ne compte pas. Le niveau L demande 100 × L × (L − 1) XP au total (200 pour le niveau 2, 600 pour le 3, 1 200 pour le 4…). Les badges changent aux niveaux 1, 3, 5, 8, 12, 16 et 20 : Bourgeon, Brise, Courant d'air, Grand large, Air des cimes, Air polaire, Légende de l'air pur. La série et les XP sont gardés dans la station (mémoire non volatile), le niveau et le badge sont calculés par l'appli.
+- **Le direct** : l'appli commente le classement façon retransmission sportive (dépassements depuis minuit et leur cause, aération du jour, séries, montées de niveau, photo-finish).
+
+Fonctionnement : chaque station publie toutes les 10 min un résumé retenu sur `sde/<SDE-XXXX>/classement` et s'abonne à `sde/+/classement`. L'appli lit le classement par `/api/ranking` (ou la demande MQTT `ranking`). Le serveur EMQX doit autoriser cet abonnement pour tous les identifiants (règle décrite dans `tools/atelier/LISEZMOI.md`) ; sans elle, l'onglet le signale et seule la station elle-même apparaît.
+
 ## Si la station redémarre toute seule
 
 La station garde la cause de ses 7 derniers démarrages. L'appli affiche un bandeau quand un démarrage n'était pas voulu, et la vue ingénieur (Réglages > Connexion) montre le détail. Les causes possibles :

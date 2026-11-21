@@ -88,6 +88,7 @@
 #define CLOUD_INFO_MS 60000        // état complet publié toutes les minutes
 #define CLOUD_LIVE_IDLE_MS 60000   // une mesure par minute quand personne ne regarde
 #define CLOUD_WATCH_MS 90000       // chaque mesure pendant 90 s après une demande de l'appli
+#define CLOUD_RANK_MS 600000      // résumé du classement CO2 publié toutes les 10 min
 #define CLOUD_CHUNK 2000           // taille d'un morceau d'historique (octets), un toutes les 200 ms
 
 // Alertes sur le téléphone (net/alerts) par ntfy : seuils par défaut,

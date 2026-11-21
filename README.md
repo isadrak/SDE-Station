@@ -172,6 +172,7 @@ Quelques problèmes rencontrés en route et comment je les ai trouvés :
 
 - PCB V2 : routage du GND du capteur de CO2, résistances de tirage I2C corrigées, sortie pour la bande LED, DevKitC tourné prise USB vers le bas, R/T du MH-Z1911A à la masse (mode I2C) et tirages 4,7 kΩ sur IO16/IO17.
 - Station V2 (firmware 0.10.0, à valider sur la carte) : table de partitions avec un programme de 1,5 Mo (flash USB obligatoire, historique ramené à 20 jours), MH-Z1911A lu en I2C et détecté automatiquement face au MH-Z19B, calibration du CO2 guidée, correction de température, alertes ntfy (CO2 et humidité), bouton BOOT 8 s pour remettre le Wi-Fi à zéro, résumé de la semaine dans l'appli.
+- Classement CO2 entre stations (firmware 0.10.1, à valider sur la carte) : pseudo, moyenne sur 30 jours, séries de bons jours, XP, niveaux et badges, commentaires façon direct sportif dans l'onglet Classement (voir le guide, section 11).
 - Boîtier V2 (`boitier/sde-boitier-v2.scad`) et outil de mise en service à l'atelier (`tools/atelier/`).
 - Tableau de bord InfluxDB + Grafana abonné aux mêmes sujets MQTT.
 
