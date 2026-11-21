@@ -420,6 +420,66 @@ tbody tr:last-child td { border-bottom: 0; }
     radial-gradient(50% 70% at 100% 0%, rgba(74,147,234,.12), transparent 70%), linear-gradient(160deg, #171b25, #0b0d12); }
 }
 
+/* ================================================================ Classement CO2 */
+.rank-hero { position: relative; overflow: hidden; padding: 24px 22px; border-radius: var(--r-lg);
+  background: radial-gradient(520px 260px at 100% 0%, color-mix(in srgb, #e8b53a 26%, transparent), transparent 70%), #0b0d12; color: #f4f3ef; box-shadow: var(--shadow); }
+.rank-hero .kicker { font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: #e8c46a; font-weight: 650; }
+.rank-hero .me { display: flex; align-items: center; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.rank-hero .pos { font-size: 56px; line-height: 1; font-weight: 750; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.rank-hero .pos sup { font-size: 22px; font-weight: 650; vertical-align: top; margin-left: 2px; }
+.rank-hero .pos small { display: block; font-size: var(--fs-xs); font-weight: 500; color: #b9b7ae; letter-spacing: 0; margin-top: 4px; }
+.rank-hero .who b { font-size: var(--fs-lg); display: block; }
+.rank-hero .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 18px; }
+.rank-hero .stat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); border-radius: var(--r-md); padding: 10px 12px; }
+.rank-hero .stat span { display: block; font-size: var(--fs-xs); color: #b9b7ae; }
+.rank-hero .stat b { font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
+.rank-hero .hint { color: #b9b7ae; }
+.xp { margin-top: 16px; }
+.xp .bar { height: 10px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; }
+.xp .bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #e8b53a, #f6dc8a); }
+.xp .lbl { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: #b9b7ae; margin-top: 6px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 99px; padding: 2px 9px 2px 6px; font-size: var(--fs-xs); font-weight: 650; white-space: nowrap;
+  background: color-mix(in srgb, var(--bt) 18%, transparent); color: var(--bt); border: 1px solid color-mix(in srgb, var(--bt) 35%, transparent); }
+.rank-hero .badge { --bt: #f0cd72; }
+.badge.t0 { --bt: hsl(130 45% 42%); } .badge.t1 { --bt: hsl(160 50% 38%); } .badge.t2 { --bt: hsl(195 65% 42%); }
+.badge.t3 { --bt: hsl(215 70% 50%); } .badge.t4 { --bt: hsl(265 50% 55%); } .badge.t5 { --bt: hsl(190 80% 45%); } .badge.t6 { --bt: hsl(42 90% 45%); }
+.rank-feed { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rank-feed li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-2); }
+.rank-feed li .ic { font-size: 20px; line-height: 30px; text-align: center; }
+.rank-feed li p { margin: 0; line-height: 1.45; }
+.rank-feed li.hot { background: color-mix(in srgb, #e8b53a 16%, var(--surface-2)); }
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; align-items: end; margin: 6px 0 18px; }
+.podium .step { text-align: center; }
+.podium .step .nm { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.podium .step .av { font-size: var(--fs-xs); color: var(--text-muted); margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
+.podium .block { border-radius: var(--r-md) var(--r-md) 6px 6px; display: grid; place-items: center; font-size: var(--fs-xl); font-weight: 750; color: #fff; }
+.podium .p1 .block { height: 104px; background: linear-gradient(180deg, #f2cf6b, #c9951f); }
+.podium .p2 .block { height: 78px; background: linear-gradient(180deg, #d5d8de, #9aa0aa); }
+.podium .p3 .block { height: 60px; background: linear-gradient(180deg, #e2a77a, #b06d3c); }
+.podium .me .nm { color: var(--accent); }
+.rank-list { list-style: none; margin: 0; padding: 0; }
+.rank-list li { display: grid; grid-template-columns: 34px 22px 1fr auto; gap: 10px; align-items: center; padding: 10px 4px; border-top: 1px solid var(--border); }
+.rank-list li.me { background: var(--accent-soft); border-radius: var(--r-sm); }
+.rank-list .n { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.rank-list .mv { font-size: var(--fs-xs); font-weight: 700; text-align: center; }
+.rank-list .mv.up { color: var(--g5); } .rank-list .mv.down { color: var(--g1); } .rank-list .mv.eq { color: var(--text-muted); }
+.rank-list .nm b { margin-right: 6px; }
+.rank-list .nm small { display: block; color: var(--text-muted); font-size: var(--fs-xs); margin-top: 2px; }
+.rank-list .ppm { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rank-list .ppm small { display: block; font-weight: 400; font-size: var(--fs-xs); color: var(--text-muted); }
+.rank-join { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.rank-join input { flex: 1 1 180px; }
+.rank-hero .rank-join input { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); color: #fff; }
+.badge-grid .badge { white-space: normal; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
+.rank-rules p, .rank-rules li { color: var(--text-secondary); }
+.rank-rules ul { padding-left: 18px; margin: 8px 0; }
+@media (max-width: 700px) {
+  .rank-hero { padding: 22px 18px; border-radius: 24px; }
+  .rank-hero .pos { font-size: 48px; }
+  .podium .p1 .block { height: 88px; } .podium .p2 .block { height: 66px; } .podium .p3 .block { height: 50px; }
+}
+
 /* ================================================================ Écrans étroits */
 @media (max-width: 860px) {
   .tiles { grid-template-columns: repeat(2, 1fr); }
@@ -473,6 +533,7 @@ tbody tr:last-child td { border-bottom: 0; }
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button role="tab" data-view="home" aria-selected="true"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V19a1 1 0 0 1-1 1h-4.5v-5.5h-5V20H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Accueil</button>
     <button role="tab" data-view="dash" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18l5-6 4 3 7-9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Mesures</button>
+    <button role="tab" data-view="rank" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v1.5A3 3 0 0 0 8 10.5M16 6h3v1.5a3 3 0 0 1-3 3M12 13v4M8.5 20h7M9.5 17h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Classement</button>
     <button role="tab" data-view="device" aria-selected="false"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Réglages</button>
   </nav>
   <div class="spacer"></div>
@@ -611,6 +672,11 @@ tbody tr:last-child td { border-bottom: 0; }
       <h2>Statistiques de la période <span class="muted">min, moyenne, 95e centile, max</span></h2>
       <div class="table-wrap"><table id="statsTable"></table></div>
     </div>
+  </section>
+
+  <!-- ================================================= Classement CO2 -->
+  <section id="view-rank" hidden style="display:contents">
+    <div id="rankPage" style="display:contents"></div>
   </section>
 
   <!-- ================================================= Réglages -->
@@ -1620,6 +1686,7 @@ class Remote {
       return this.request(msg, Math.max(timeout, 20000), true);
     }
     if (p === "/api/log") return this.request({ op: "log" }, 20000);
+    if (p === "/api/ranking") return this.request({ op: "ranking" }, 15000);
     if (p === "/api/cmd") return this.request({ op: "cmd", cmd: opts.body?.get?.("cmd") || "" }, 10000);
     if (p === "/api/time") return { changed: false };   // la station a l'heure d'Internet
     throw Object.assign(new Error("Possible seulement sur place, sur le même Wi-Fi que la station."), { status: 409 });
@@ -2221,6 +2288,7 @@ function scheduleRender() {
 
 function render() {
   if (!$("view-home").hidden) { renderHome(); return; }
+  if (!$("view-rank").hidden) return;   // rafraîchi par loadRanking (ne pas effacer la saisie du pseudo)
   if (!$("view-device").hidden) { renderDevice(); if ($("tableDetails").open) renderRaw(); return; }
   const rows = visible();
   for (const o of Object.values(chartObjs)) renderBlock(o, rows);
@@ -4019,11 +4087,419 @@ function updateConnectPanel() {
 }
 function showView(name) {
   for (const b of document.querySelectorAll(".tabs button")) b.setAttribute("aria-selected", String(b.dataset.view === name));
-  for (const v of ["home", "dash", "device"]) $(`view-${v}`).hidden = v !== name;
+  for (const v of ["home", "dash", "rank", "device"]) $(`view-${v}`).hidden = v !== name;
   const sec = $(`view-${name}`);
   sec.classList.remove("view-in"); void sec.offsetWidth; sec.classList.add("view-in");
   window.scrollTo({ top: 0 });
+  if (name === "rank") { renderRank(); loadRanking(); return; }
   render();
+}
+
+// ------------------------------------------------------------ Classement CO2
+// Chaque station qui participe publie, toutes les 10 min, un résumé de son CO2
+// sur le serveur d'accès à distance (sde/<SDE-XXXX>/classement) et reçoit
+// celui des autres (firmware 0.10.1 et plus, /api/ranking). Classement : la
+// moyenne de CO2 sur 30 jours la plus basse gagne. L'appli calcule le
+// niveau, le badge et les commentaires ; la station garde la série et les XP.
+const RANK_GOOD = 970;              // bon jour : moyenne sous ce seuil (EN 16798-1 cat. I)
+const RANK_MIN_DAYS = 3;            // jours d'au moins 6 h de mesures pour être classé
+const RANK_STALE_S = 48 * 3600;     // station muette depuis plus longtemps : retirée
+const LEVEL_XP = L => 100 * L * (L - 1);   // XP totaux pour atteindre le niveau L
+const levelOf = xp => Math.max(1, Math.floor((1 + Math.sqrt(1 + (xp || 0) / 25)) / 2));
+const streakMult = s => s > 21 ? 8 : s > 14 ? 4 : s > 7 ? 2 : 1;   // multiplicateur du s-ième bon jour d'affilée
+const BADGES = [
+  [1, "Bourgeon", "🌱"], [3, "Brise", "🍃"], [5, "Courant d'air", "🌬️"], [8, "Grand large", "⛵"],
+  [12, "Air des cimes", "🏔️"], [16, "Air polaire", "❄️"], [20, "Légende de l'air pur", "👑"],
+];
+function badgeOf(L) {
+  let t = 0;
+  for (let i = 0; i < BADGES.length; i++) if (L >= BADGES[i][0]) t = i;
+  return { tier: t, name: BADGES[t][1], icon: BADGES[t][2] };
+}
+const badgeHtml = p => `<span class="badge t${p.badge.tier}" title="Badge ${esc(p.badge.name)}">${p.badge.icon} Niv. ${p.lv}</span>`;
+const ordinal = n => n === 1 ? "1<sup>er</sup>" : `${n}<sup>e</sup>`;
+const ordTxt = n => n === 1 ? "1er" : `${n}e`;
+const hhmm = ts => { const d = new Date(ts * 1000), m = d.getMinutes(); return `${d.getHours()} h${m ? " " + String(m).padStart(2, "0") : ""}`; };
+const ppmColor = v => `var(--g${gradeOf("co2", v)})`;
+const B = p => `<b>${esc(p.p)}</b>`;
+
+const rank = { data: null, at: 0, err: null, loading: false, quit: false, edit: false, msg: "" };
+
+function rankAvailability() {
+  if (source === "demo") return "ok";
+  if (!source) return "nosource";
+  if (source !== "wifi") return "usb";
+  if (!lastInfo?.rank) return "firmware";
+  if (!lastInfo.rank.on) return "join";
+  if (!net.cloud && lastInfo.cloud && !lastInfo.cloud.on) return "cloud";
+  return "ok";
+}
+
+async function loadRanking() {
+  if (source === "demo") { rank.data ??= demoRanking(); rank.at = Date.now(); renderRank(); return; }
+  if (rankAvailability() !== "ok") { renderRank(); return; }
+  if (rank.loading) return;
+  rank.loading = true;
+  if (!rank.data) renderRank();
+  try {
+    rank.data = await api("/api/ranking", {}, 15000);
+    rank.err = null;
+    rank.at = Date.now();
+  } catch (err) {
+    rank.err = err.message;
+  }
+  rank.loading = false;
+  renderRank();
+}
+
+// Lignes du classement : participants actifs, triés par moyenne sur 30 jours.
+function rankRows(d) {
+  const nowS = d.now || Date.now() / 1000;
+  const byId = new Map();
+  for (const p of d.peers || []) byId.set(p.id, { ...p });
+  if (d.self) byId.set(d.self.id, { ...(byId.get(d.self.id) || {}), ...d.self });   // le résumé local est le plus frais
+  const all = [...byId.values()].filter(p => p.p && (p.id === d.id || nowS - p.ts < RANK_STALE_S));
+  for (const p of all) {
+    p.me = p.id === d.id;
+    p.lv = levelOf(p.xp);
+    p.badge = badgeOf(p.lv);
+    p.s = p.s || 0;
+    p.air = p.air || [];
+  }
+  const ranked = all.filter(p => p.a != null && p.d >= RANK_MIN_DAYS)
+    .sort((x, y) => x.a - y.a || (y.xp || 0) - (x.xp || 0) || x.p.localeCompare(y.p));
+  ranked.forEach((p, i) => { p.pos = i + 1; });
+  // Classement d'hier soir (moyennes arrêtées à minuit) : qui a doublé qui aujourd'hui.
+  ranked.filter(p => p.y != null).sort((x, y) => x.y - y.y || (y.xp || 0) - (x.xp || 0) || x.p.localeCompare(y.p))
+    .forEach((p, i) => { p.ypos = i + 1; });
+  const quali = all.filter(p => !ranked.includes(p));
+  return { ranked, quali, me: all.find(p => p.me), nowS };
+}
+
+// Choix stable d'une tournure : même phrase toute la journée pour le même événement.
+function pick(list, key) {
+  let h = 7;
+  for (const c of new Date().toDateString() + key) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return list[h % list.length];
+}
+
+// Commentaires façon direct olympique, du plus important au moins important.
+function rankComments(R) {
+  const out = [];
+  const add = (ic, html, hot = false) => out.push({ ic, html, hot });
+  const { ranked, quali, me } = R;
+  const lead = ranked[0];
+
+  // Changement en tête, puis dépassements depuis hier soir.
+  if (lead && lead.ypos && lead.ypos > 1) {
+    const prev = ranked.find(p => p.ypos === 1);
+    add("🥇", pick([
+      `Changement en tête ! ${B(lead)} détrône ${B(prev)} et prend la première place avec ${lead.a} ppm de moyenne !`,
+      `Coup de tonnerre au sommet : ${B(lead)} passe devant ${B(prev)} et s'empare de l'or !`,
+    ], "lead" + lead.id), true);
+  }
+  const passes = [];
+  for (const a of ranked) for (const b of ranked)
+    if (a.ypos && b.ypos && a.pos < b.pos && a.ypos > b.ypos && !(a === lead && b.ypos === 1)) passes.push([a, b]);
+  passes.sort((x, y) => x[0].pos - y[0].pos);
+  for (const [a, b] of passes.slice(0, 3)) {
+    const air = a.air[0];
+    const key = a.id + b.id;
+    if (b.me) {
+      add("😤", air && air[1] >= 150
+        ? `Aïe ! ${B(a)} vient de te passer devant grâce à une aération incroyable à partir de ${hhmm(air[0])}. À toi de répondre !`
+        : `Aïe ! ${B(a)} vient de te passer devant${a.t != null ? ` avec ${a.t} ppm de moyenne aujourd'hui` : ""}. À toi de répondre !`, true);
+    } else if (air && air[1] >= 150) {
+      add("🚀", pick([
+        `Oh my God ! ${B(a)} vient de dépasser ${B(b)} grâce à une aération incroyable à partir de ${hhmm(air[0])} !`,
+        `Renversement de situation : ${B(a)} passe devant ${B(b)} après une aération monumentale à ${hhmm(air[0])} (−${air[1]} ppm) !`,
+        `Quelle remontée ! Fenêtres grandes ouvertes à ${hhmm(air[0])}, ${B(a)} double ${B(b)} dans le dernier virage !`,
+      ], key), true);
+    } else if (b.t != null && b.t >= 1100 && (a.t == null || b.t - a.t > 150)) {
+      add("😱", pick([
+        `${B(b)} craque (${b.t} ppm aujourd'hui) et ${B(a)} en profite pour passer devant !`,
+        `Défaillance de ${B(b)} ! ${B(a)} ne laisse pas passer l'occasion et prend sa place.`,
+      ], key), true);
+    } else {
+      add("⚡", pick([
+        `${B(a)} dépasse ${B(b)} grâce à une journée de haut vol${a.t != null ? ` : ${a.t} ppm de moyenne aujourd'hui` : ""} !`,
+        `Dépassement propre et net : ${B(a)} passe ${B(b)}${a.t != null ? `, porté par un air à ${a.t} ppm aujourd'hui` : ""}.`,
+      ], key), true);
+    }
+  }
+
+  // Ta position.
+  if (me?.pos) {
+    const ahead = ranked[me.pos - 2];
+    if (me.pos === 1) add("👑", `Tu es en tête du classement ! Garde les fenêtres ouvertes pour rester sur la plus haute marche.`);
+    else add("🎯", `Tu es ${ordTxt(me.pos)} sur ${ranked.length}. Il te manque ${Math.max(1, me.a - ahead.a)} ppm de moyenne pour dépasser ${B(ahead)}.`);
+    const last = Number(store.get("sde.rank.lastpos"));
+    if (last && last !== me.pos) add(last > me.pos ? "📈" : "📉", last > me.pos
+      ? `Depuis ta dernière visite, tu as gagné ${last - me.pos} place${last - me.pos > 1 ? "s" : ""}. Le public scande ton nom !`
+      : `Depuis ta dernière visite, tu as perdu ${me.pos - last} place${me.pos - last > 1 ? "s" : ""}. Rien n'est perdu : une bonne aération et ça repart.`);
+  }
+
+  // Leader qui reste en tête.
+  if (lead && !(lead.ypos > 1) && ranked.length > 1)
+    add("🏆", pick([
+      `${B(lead)} mène la course avec ${lead.a} ppm de moyenne sur 30 jours. Qui pourra l'arrêter ?`,
+      `Toujours en tête : ${B(lead)}, ${lead.a} ppm de moyenne. Une domination impressionnante !`,
+      `${B(lead)} garde l'or avec ${lead.a} ppm. Les poursuivants vont devoir ouvrir grand !`,
+    ], "keep" + lead.id));
+
+  // Aération du jour : la plus grosse baisse de CO2.
+  let best = null;
+  for (const p of [...ranked, ...quali]) for (const e of p.air) if (!best || e[1] > best.e[1]) best = { p, e };
+  if (best && best.e[1] >= 200)
+    add("🌬️", pick([
+      `Aération du jour signée ${B(best.p)} à ${hhmm(best.e[0])} : −${best.e[1]} ppm d'un coup. Le public est debout !`,
+      `Record de la journée pour ${B(best.p)} : −${best.e[1]} ppm en une aération, à ${hhmm(best.e[0])}. Du jamais vu !`,
+    ], "air" + best.p.id));
+
+  // Séries : la plus longue, et les paliers où les XP doublent.
+  const streaker = [...ranked, ...quali].filter(p => p.s >= 3).sort((x, y) => y.s - x.s)[0];
+  if (streaker) {
+    const m = streakMult(streaker.s + 1);
+    if ([8, 15, 22].includes(streaker.s))
+      add("🔥", `XP ${streaker.s === 8 ? "doublés" : streaker.s === 15 ? "quadruplés" : "multipliés par 8"} pour ${B(streaker)} : ${streaker.s} jours de série, chaque bon jour vaut maintenant ${100 * m} XP !`, true);
+    else
+      add("🔥", pick([
+        `${B(streaker)} enchaîne ${streaker.s} jours sous ${RANK_GOOD} ppm ! Série en x${m}, les XP pleuvent.`,
+        `Série de feu pour ${B(streaker)} : ${streaker.s} jours d'affilée dans le vert. Qui l'arrêtera ?`,
+      ], "streak" + streaker.id));
+  }
+
+  // Montées de niveau depuis la dernière visite de cet appareil.
+  let seen = {};
+  try { seen = JSON.parse(store.get("sde.rank.lv") || "{}"); } catch {}
+  for (const p of [...ranked, ...quali])
+    if (seen[p.id] && p.lv > seen[p.id])
+      add(p.badge.icon, `${B(p)} passe au niveau ${p.lv}${badgeOf(seen[p.id]).tier !== p.badge.tier ? ` et décroche le badge « ${esc(p.badge.name)} »` : ""} !`, true);
+
+  // Coup dur du jour.
+  const worst = ranked.filter(p => p.t != null && p.t >= 1200).sort((x, y) => y.t - x.t)[0];
+  if (worst)
+    add("🥵", pick([
+      `Coup dur pour ${B(worst)} : ${worst.t} ppm aujourd'hui. Les juges réclament une fenêtre ouverte !`,
+      `Journée compliquée pour ${B(worst)} (${worst.t} ppm). La fenêtre est restée fermée ?`,
+    ], "bad" + worst.id));
+
+  // Photo-finish : deux voisins à moins de 8 ppm.
+  for (let i = 1; i < ranked.length; i++) {
+    const a = ranked[i - 1], b = ranked[i];
+    if (b.a - a.a <= 8) {
+      add("📸", `Photo-finish ! Seulement ${b.a - a.a || "moins d'un"} ppm séparent ${B(a)} et ${B(b)}. Ça va se jouer à la fenêtre !`);
+      break;
+    }
+  }
+
+  for (const p of quali.filter(q => !q.me).slice(0, 2))
+    add("👋", `Bienvenue à ${B(p)} ! En qualification : ${p.d || 0} jour${p.d > 1 ? "s" : ""} sur ${RANK_MIN_DAYS}.`);
+  return out.slice(0, 8);
+}
+
+function rememberRank(R) {
+  const lv = {};
+  for (const p of [...R.ranked, ...R.quali]) lv[p.id] = p.lv;
+  store.set("sde.rank.lv", JSON.stringify(lv));
+  if (R.me?.pos) store.set("sde.rank.lastpos", String(R.me.pos));
+}
+
+function rankJoinForm(id, label) {
+  const cur = lastInfo?.rank?.p || "";
+  return `<div class="rank-join"><input type="text" id="${id}" maxlength="20" placeholder="Ton pseudo" value="${esc(cur)}" autocomplete="nickname" aria-label="Pseudo">
+    <button class="btn primary" data-rank="join" data-input="${id}">${label}</button></div>`;
+}
+
+function renderRank() {
+  const page = $("rankPage");
+  if (!page || $("view-rank").hidden) return;
+  // Ne pas effacer un pseudo en cours de saisie.
+  if (page.contains(document.activeElement) && document.activeElement.tagName === "INPUT") return;
+  const st = rankAvailability();
+  const parts = [];
+  const msg = rank.msg ? `<p class="hint" style="margin-top:10px">${esc(rank.msg)}</p>` : "";
+
+  if (st === "nosource" || st === "usb" || st === "firmware") {
+    const why = {
+      nosource: "Connecte-toi à ta station pour voir le classement.",
+      usb: "Le classement passe par le Wi-Fi de la station : il n'est pas disponible par câble USB.",
+      firmware: "Ce firmware ne connaît pas encore le classement : installe la version 0.10.1 ou plus récente (Réglages › Mise à jour).",
+    }[st];
+    parts.push(`<div class="rank-hero"><div class="kicker">Classement CO2</div><h2 style="margin:8px 0 6px;font-size:var(--fs-xl)">Qui respire le meilleur air ?</h2><p class="hint">${why}</p></div>`);
+    page.innerHTML = parts.join("");
+    return;
+  }
+  if (st === "join") {
+    parts.push(`<div class="rank-hero"><div class="kicker">Classement CO2</div>
+      <h2 style="margin:8px 0 6px;font-size:var(--fs-xl)">Entre dans la compétition</h2>
+      <p style="margin:0;color:#dcdad2">Toutes les stations SDE s'affrontent sur la moyenne de CO2 du dernier mois : l'air le plus pur gagne. Enchaîne les bons jours pour gagner des XP, monter de niveau et décrocher des badges.</p>
+      ${rankJoinForm("rankPseudo", "Rejoindre")}
+      <p class="hint" style="margin-top:10px">Partagé avec les autres stations : ton pseudo, ta moyenne de CO2 (30 jours, 7 jours, aujourd'hui), ta série, tes XP et l'heure de tes grosses aérations du jour. Jamais le nom de la pièce ni les autres mesures. Tu peux quitter le classement à tout moment.</p>${msg}</div>`);
+    parts.push(rankRulesCard(false));
+    page.innerHTML = parts.join("");
+    return;
+  }
+  if (st === "cloud") {
+    parts.push(`<div class="rank-hero"><div class="kicker">Classement CO2 · ${esc(lastInfo.rank.p)}</div>
+      <h2 style="margin:8px 0 6px;font-size:var(--fs-xl)">Il manque l'accès à distance</h2>
+      <p class="hint">Les stations s'échangent le classement par le serveur d'accès à distance. Active-le dans Réglages › Accès à distance, puis reviens ici.</p>
+      <div class="rank-join"><button class="btn primary" data-rank="settings">Ouvrir les réglages</button></div></div>`);
+    page.innerHTML = parts.join("");
+    return;
+  }
+
+  const d = rank.data;
+  if (!d) {
+    parts.push(`<div class="rank-hero"><div class="kicker">Classement CO2</div><p class="hint" style="margin-top:10px">${rank.err ? `Classement indisponible : ${esc(rank.err)}` : "Chargement du classement…"}</p></div>`);
+    page.innerHTML = parts.join("");
+    return;
+  }
+  const R = rankRows(d);
+  const me = R.me;
+
+  // Carte « toi ».
+  {
+    const lv = me ? me.lv : levelOf(lastInfo?.rank?.xp), xp = me ? (me.xp || 0) : (lastInfo?.rank?.xp || 0);
+    const p = me || { p: d.p, lv, badge: badgeOf(lv), s: lastInfo?.rank?.s || 0 };
+    const lo = LEVEL_XP(lv), hi = LEVEL_XP(lv + 1);
+    const pct = Math.min(100, Math.round(100 * (xp - lo) / (hi - lo)));
+    const posHtml = p.pos ? `${ordinal(p.pos)}<small>sur ${R.ranked.length} station${R.ranked.length > 1 ? "s" : ""}</small>`
+      : `–<small>en qualification (${p.d || 0}/${RANK_MIN_DAYS} jours)</small>`;
+    const next = 100 * streakMult((p.s || 0) + 1);
+    parts.push(`<div class="rank-hero"><div class="kicker">Classement CO2 · 30 derniers jours</div>
+      <div class="me"><div class="pos">${posHtml}</div>
+        <div class="who"><b>${esc(p.p)}</b>${badgeHtml(p)} <span class="hint">${esc(p.badge.name)}</span></div></div>
+      <div class="stats">
+        <div class="stat"><span>Moyenne 30 jours</span><b>${p.a != null ? p.a + " ppm" : "–"}</b></div>
+        <div class="stat"><span>Aujourd'hui</span><b>${p.t != null ? p.t + " ppm" : "–"}</b></div>
+        <div class="stat"><span>Série</span><b>${p.s ? `🔥 ${p.s} j` : "0 j"}</b></div>
+        <div class="stat"><span>Prochain bon jour</span><b>+${next} XP</b></div>
+      </div>
+      <div class="xp"><div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="lbl"><span>Niveau ${lv} · ${xp.toLocaleString("fr-CA")} XP</span><span>Niveau ${lv + 1} à ${hi.toLocaleString("fr-CA")} XP</span></div></div>
+      ${d.sub === 0 ? `<p class="hint" style="margin-top:12px;color:#f3b37a">Le serveur d'accès à distance refuse encore l'abonnement au classement : les autres stations n'apparaissent pas. Il faut autoriser le sujet sde/+/classement dans les règles du serveur (EMQX).</p>` : ""}
+      ${rank.err ? `<p class="hint" style="margin-top:12px">Dernière mise à jour impossible : ${esc(rank.err)}</p>` : ""}</div>`);
+  }
+
+  // Le direct.
+  const feed = rankComments(R);
+  if (feed.length)
+    parts.push(`<div class="card card-pad"><h2>Le direct <span class="muted">mis à jour toutes les 10 min</span></h2><ul class="rank-feed">${
+      feed.map(c => `<li class="${c.hot ? "hot" : ""}"><span class="ic" aria-hidden="true">${c.ic}</span><p>${c.html}</p></li>`).join("")}</ul></div>`);
+
+  // Podium et classement.
+  if (R.ranked.length) {
+    let html = `<div class="card card-pad"><h2>Classement <span class="muted">moyenne de CO2 sur 30 jours, la plus basse gagne</span></h2>`;
+    if (R.ranked.length >= 3) {
+      const step = (p, cls) => `<div class="step ${cls}${p.me ? " me" : ""}"><div class="nm">${esc(p.p)}</div><div class="av">${p.a} ppm · ${badgeHtml(p)}</div><div class="block">${p.pos}</div></div>`;
+      html += `<div class="podium">${step(R.ranked[1], "p2")}${step(R.ranked[0], "p1")}${step(R.ranked[2], "p3")}</div>`;
+    }
+    html += `<ul class="rank-list">${R.ranked.map(p => {
+      const mv = p.ypos ? p.ypos - p.pos : 0;
+      const mvHtml = !p.ypos ? `<span class="mv eq">·</span>` : mv > 0 ? `<span class="mv up">▲${mv}</span>` : mv < 0 ? `<span class="mv down">▼${-mv}</span>` : `<span class="mv eq">=</span>`;
+      const sub = [p.s ? `🔥 ${p.s} j` : null, p.t != null ? `aujourd'hui ${p.t} ppm` : null, p.w != null ? `7 j ${p.w} ppm` : null].filter(Boolean).join(" · ");
+      return `<li class="${p.me ? "me" : ""}"><span class="n">${p.pos}</span>${mvHtml}<span class="nm"><b>${esc(p.p)}</b>${badgeHtml(p)}<small>${sub}</small></span>
+        <span class="ppm" style="color:${ppmColor(p.a)}">${p.a}<small>ppm</small></span></li>`;
+    }).join("")}</ul>`;
+    if (R.quali.length) html += `<p class="hint" style="margin-top:12px">En qualification (moins de ${RANK_MIN_DAYS} jours de mesures) : ${R.quali.map(p => esc(p.p)).join(", ")}.</p>`;
+    html += `<p class="hint eng-only" style="margin-top:8px">${(d.peers || []).length} résumé(s) reçu(s) sur sde/+/classement · abonnement ${d.sub === 1 ? "accepté" : d.sub === 0 ? "refusé" : "en attente"} · mis à jour ${new Date(rank.at).toLocaleTimeString("fr-CA")}</p></div>`;
+    parts.push(html);
+  } else {
+    parts.push(`<div class="card card-pad"><h2>Classement</h2><p class="hint">Personne n'est encore classé : il faut ${RANK_MIN_DAYS} jours d'au moins 6 h de mesures. Ta station publie son résumé toutes les 10 minutes.</p></div>`);
+  }
+
+  parts.push(rankRulesCard(true));
+  page.innerHTML = parts.join("");
+  rememberRank(R);
+}
+
+function rankRulesCard(joined) {
+  const badges = BADGES.map((b, i) => `<span class="badge t${i}">${b[2]} ${esc(b[1])} · niv. ${b[0]}</span>`).join("");
+  return `<div class="card card-pad rank-rules"><h2>Règles du jeu</h2>
+    <ul>
+      <li><b>Classement</b> : moyenne de CO2 minute par minute sur les 30 derniers jours (la plus basse gagne). Classé après ${RANK_MIN_DAYS} jours d'au moins 6 h de mesures.</li>
+      <li><b>Bon jour</b> : moyenne de la journée sous ${RANK_GOOD} ppm (catégorie I de la norme EN 16798-1, la note 5 du CO2). Il rapporte 100 XP.</li>
+      <li><b>Série</b> : les XP doublent après 7 bons jours d'affilée (x2), puis 14 (x4) et 21 (x8). Un jour au-dessus remet la série à zéro ; un jour sans assez de mesures ne compte pas.</li>
+      <li><b>Niveaux</b> : il faut 200 XP pour le niveau 2, puis 400 de plus, 600, et ainsi de suite.</li>
+    </ul>
+    <div class="badge-grid">${badges}</div>
+    ${joined ? `<details${rank.edit ? " open" : ""}><summary>Changer de pseudo ou quitter le classement</summary>
+      ${rankJoinForm("rankPseudo2", "Enregistrer")}
+      <div class="rank-join"><button class="btn danger" data-rank="quit">${rank.quit ? "Confirmer : quitter le classement" : "Quitter le classement"}</button></div>
+      <p class="hint" style="margin-top:8px">En quittant, ton résumé est retiré du serveur. Tes XP et ta série restent gardés dans la station.</p>${rank.msg ? `<p class="hint">${esc(rank.msg)}</p>` : ""}
+    </details>` : ""}</div>`;
+}
+
+async function rankJoin(inputId) {
+  const pseudo = ($(inputId)?.value || "").trim();
+  if ([...pseudo].length < 2 || [...pseudo].length > 20 || /["\\<>]/.test(pseudo)) {
+    rank.msg = "Choisis un pseudo de 2 à 20 caractères (sans guillemets ni chevrons).";
+    document.activeElement?.blur();
+    renderRank();
+    return;
+  }
+  document.activeElement?.blur();
+  if (source === "demo") {
+    rank.data.p = pseudo;
+    rank.data.self.p = pseudo;
+    lastInfo.rank = { ...(lastInfo.rank || {}), on: true, p: pseudo };
+    rank.msg = "";
+    renderRank();
+    return;
+  }
+  const r = await sendCmd(`rank.name ${pseudo}`);
+  if (!r?.ok) { rank.msg = r?.msg ? `Refusé par la station : ${r.msg}` : "La station n'a pas répondu."; renderRank(); return; }
+  lastInfo.rank = { ...(lastInfo.rank || {}), on: true, p: pseudo };
+  rank.msg = "";
+  rank.edit = false;
+  renderRank();
+  setTimeout(loadRanking, 3000);   // la station publie son résumé tout de suite
+}
+
+async function rankQuit() {
+  if (!rank.quit) { rank.quit = true; rank.edit = true; renderRank(); return; }
+  rank.quit = false;
+  if (source !== "demo") {
+    const r = await sendCmd("rank.off");
+    if (!r?.ok) { rank.msg = "La station n'a pas répondu."; renderRank(); return; }
+  }
+  lastInfo.rank = { ...(lastInfo.rank || {}), on: false };
+  rank.data = null;
+  rank.msg = "";
+  renderRank();
+}
+
+document.addEventListener("click", ev => {
+  const b = ev.target.closest?.("[data-rank]");
+  if (!b) return;
+  const a = b.dataset.rank;
+  if (a === "join") rankJoin(b.dataset.input);
+  else if (a === "quit") rankQuit();
+  else if (a === "settings") showView("device");
+});
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Enter" && (ev.target.id === "rankPseudo" || ev.target.id === "rankPseudo2")) rankJoin(ev.target.id);
+});
+setInterval(() => { if (!$("view-rank").hidden && !document.hidden) loadRanking(); }, 60000);
+
+// Démonstration : un petit championnat inventé.
+function demoRanking() {
+  const now = Math.round(Date.now() / 1000);
+  const mid = new Date(); mid.setHours(0, 0, 0, 0);
+  const at = (h, m) => Math.round(mid / 1000) + h * 3600 + m * 60;
+  const air = (h, m, drop) => (at(h, m) < now ? [[at(h, m), drop]] : []);
+  const peers = [
+    { id: "SDE-1A2B", p: "Fenêtre Ouverte", a: 598, y: 604, w: 571, t: 512, d: 20, s: 16, xp: 5900, air: air(7, 40, 420) },
+    { id: "SDE-3C4D", p: "Poumon d'Acier", a: 603, y: 601, w: 620, t: 690, d: 20, s: 9, xp: 3100, air: [] },
+    { id: "SDE-5E6F", p: "Brise du Nord", a: 641, y: 655, w: 602, t: 498, d: 18, s: 8, xp: 2600, air: air(14, 0, 530) },
+    { id: "SDE-7A8B", p: "Courant d'Air", a: 649, y: 645, w: 670, t: 1260, d: 19, s: 0, xp: 1900, air: [] },
+    { id: "SDE-9C0D", p: "MlleOxygène", a: 702, y: 699, w: 690, t: 720, d: 15, s: 3, xp: 900, air: [] },
+    { id: "SDE-2F3E", p: "Le Ventilo", a: 845, y: 846, w: 830, t: 800, d: 11, s: 1, xp: 400, air: [] },
+    { id: "SDE-4B5C", p: "Nouveau Souffle", a: 720, y: 735, w: 720, t: 700, d: 2, s: 2, xp: 200, air: [] },
+  ].map(p => ({ ...p, ts: now - 300 }));
+  const self = { id: "SDE-DEMO", p: lastInfo?.rank?.p || "Toi (démo)", a: 644, y: 652, w: 610, t: 560, d: 20, s: 11, xp: 3600, ts: now, air: air(12, 15, 310) };
+  return { on: true, id: "SDE-DEMO", p: self.p, now, best: 12, good: RANK_GOOD, sub: 1, self, peers };
 }
 
 function setTheme(th) {

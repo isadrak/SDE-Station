@@ -16,11 +16,12 @@
 //      et de l'abonnement ntfy).
 //
 // Côté EMQX Cloud (une seule fois pour toutes les stations), dans
-// Access Control > Authorization, deux règles « All Users » :
-//   allow  pubsub  sde/${username}/#
-//   deny   pubsub  #
+// Access Control > Authorization, trois règles « All Users » :
+//   allow  pubsub     sde/${username}/#
+//   allow  subscribe  sde/+/classement   (classement CO2 entre stations)
+//   deny   pubsub     #
 // Chaque identifiant (station et appli du client) ne voit alors que les
-// sujets de sa propre station. Puis, pour chaque station, ajouter l'utilisateur
+// sujets de sa propre station, plus les résumés du classement. Puis, pour chaque station, ajouter l'utilisateur
 // dans Access Control > Authentication (ou importer sortie/emqx-utilisateurs.csv).
 //
 // Le dossier sortie/ contient des mots de passe : il n'est pas versionné.

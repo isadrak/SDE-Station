@@ -14,6 +14,7 @@
 #include "api.h"
 #include "cloud.h"
 #include "event_log.h"
+#include "ranking.h"
 #include "history_query.h"
 #include "pooled_server.h"
 #include "time_keeper.h"
@@ -381,6 +382,14 @@ void handleCloudSet() {
   sendJson(doc);
 }
 
+// Classement CO2 (résumés reçus des autres stations par le serveur d'accès à distance).
+void handleRanking() {
+  JsonDocument doc;
+  ranking::toJson(doc);
+  doc["sub"] = cloud::rankSubscription();
+  sendJson(doc);
+}
+
 void handleCmd() {
   JsonDocument reply;
   runCommand(server.arg("cmd"), reply);
@@ -469,6 +478,7 @@ void webServerStart(DataStore* s, WifiManager* w) {
   server.on("/api/reset", HTTP_POST, handleReset);
   server.on("/api/time", HTTP_POST, handleTime);
   server.on("/api/cmd", HTTP_POST, handleCmd);
+  server.on("/api/ranking", HTTP_GET, handleRanking);
   server.on("/api/cloud", HTTP_GET, handleCloudGet);
   server.on("/api/cloud", HTTP_POST, handleCloudSet);
   server.on("/api/update", HTTP_POST, handleUpdateDone, handleUpdateUpload);

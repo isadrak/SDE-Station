@@ -38,6 +38,7 @@
 #include "net/cloud.h"
 #include "net/data_store.h"
 #include "net/event_log.h"
+#include "net/ranking.h"
 #include "net/time_keeper.h"
 #include "net/web_server.h"
 #include "net/wifi_manager.h"
@@ -462,6 +463,7 @@ void buildInfo(JsonDocument& doc) {
   }
   doc["t_offset"] = round1(tempOffset);
   alerts::toJson(doc["alert"].to<JsonObject>());
+  ranking::infoJson(doc["rank"].to<JsonObject>());
   JsonObject range = doc["co2_range"].to<JsonObject>();
   range["set"] = CO2_RANGE_PPM;
   range["ack"] = co2RangeAck;
@@ -569,6 +571,7 @@ void sampleToJson(const Sample& s, JsonObject doc) {
 //   pm.cycle <s> (0 = continu) | pm.now | led <0-100> | led.count <1-120> | led.find | led.night on|off
 //   name <nom de la pièce> | temp.offset <°C> | co2.cal.auto | co2.cal.stop
 //   alert.topic <sujet> | alert.off | alert.co2 <ppm> | alert.rh <%> | alert.test
+//   rank.name <pseudo> | rank.off
 void runCommand(String line, JsonDocument& reply) {
   line.trim();
   Command c;
@@ -576,6 +579,8 @@ void runCommand(String line, JsonDocument& reply) {
     buildInfo(reply);
     return;
   } else if (alerts::command(line, reply)) {
+    return;
+  } else if (ranking::command(line, reply)) {
     return;
   } else if (line.startsWith("temp.offset ")) {
     // temp.offset <°C> : degrés retirés à la mesure du BME680 (-10 à 10)
@@ -733,8 +738,14 @@ static void updateLeds(const Sample& s) {
     const float drop = peak - co2;
     const bool falling = isnan(co2Min[3]) || co2Min[3] - co2 >= (leds.airing() ? 6 : 9);  // marge pour ne pas clignoter
     airing = falling && peak >= 700 && drop >= 100 && drop / age >= (leds.airing() ? 8 : 10);
-    if (airing && !leds.airing()) elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
-    if (!airing && leds.airing()) elog::add("aeration terminee : CO2 %.0f ppm", co2);
+    if (airing && !leds.airing()) {
+      elog::add("aeration detectee : CO2 %.0f ppm (pic %.0f)", co2, peak);
+      ranking::airingStart(peak);
+    }
+    if (!airing && leds.airing()) {
+      elog::add("aeration terminee : CO2 %.0f ppm", co2);
+      ranking::airingEnd(co2);
+    }
   }
   leds.setAiring(airing);
   leds.setPmActive(s.pmState == 2 || s.pmState == 3);  // préchauffage ou mesure du SDS011
@@ -865,6 +876,7 @@ void setup() {
     elog::add("plantage : %s", bootCrash.c_str());
   wifi.begin();
   alerts::begin(wifi.apSsid());
+  ranking::begin(wifi.apSsid());
   timekeeper::begin(TIMEZONE);
 
   esp_task_wdt_init(WDT_TIMEOUT_S, true);

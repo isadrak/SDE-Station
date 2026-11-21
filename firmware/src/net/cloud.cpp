@@ -10,6 +10,7 @@
 #include "api.h"
 #include "event_log.h"
 #include "history_query.h"
+#include "ranking.h"
 #include "time_keeper.h"
 
 namespace cloud {
@@ -98,6 +99,10 @@ const char* volatile err_ = nullptr;   // dernière erreur, en clair
 volatile bool paused_ = false;         // coupé au démarrage après des plantages
 volatile uint32_t yieldUntil_ = 0;     // connexion rendue pour une alerte jusqu'à cet instant (0 = non)
 char errBuf_[160];
+volatile bool rankSub_ = false;     // abonné à sde/+/classement
+volatile int rankSubMsg_ = -1;      // numéro de la demande d'abonnement
+volatile int8_t rankSubOk_ = -1;    // -1 inconnu, 0 refusé par le serveur, 1 accepté
+const char* kRankTopic = "sde/+/classement";
 
 // Traduit l'échec de connexion TCP/TLS, avec les codes bruts à la fin pour
 // le diagnostic (esp-tls, mbedtls, drapeaux du certificat).
@@ -141,6 +146,8 @@ void onEvent(void*, esp_event_base_t, int32_t id, void* data) {
       err_ = nullptr;
       elog::add("acces a distance : connecte (tas %u ko)", esp_get_free_heap_size() / 1024);
       esp_mqtt_client_subscribe(client_, (base_ + "req").c_str(), 0);
+      rankSub_ = false;
+      rankSubOk_ = -1;
       esp_mqtt_client_publish(client_, (base_ + "status").c_str(), "online", 0, 1, 1);
       needInfo_ = needLive_ = true;
       break;
@@ -149,7 +156,20 @@ void onEvent(void*, esp_event_base_t, int32_t id, void* data) {
       connected_ = false;
       droppedAt_ = millis() | 1;
       break;
+    case MQTT_EVENT_SUBSCRIBED:
+      // SUBACK : 0x80 = refusé (règles du serveur sans sde/+/classement).
+      if (e->msg_id == rankSubMsg_) {
+        rankSubOk_ = (e->data_len > 0 && (uint8_t)e->data[0] >= 0x80) ? 0 : 1;
+        if (!rankSubOk_) elog::add("classement : abonnement refuse par le serveur");
+      }
+      break;
     case MQTT_EVENT_DATA:
+      // Classement : résumés des autres stations (en un seul morceau).
+      if (e->topic_len > 11 && !strncmp(e->topic + e->topic_len - 11, "/classement", 11)) {
+        if (e->current_data_offset == 0 && e->data_len == e->total_data_len)
+          ranking::onPeer(e->topic, e->topic_len, e->data, e->data_len);
+        break;
+      }
       // Les demandes tiennent toujours en un seul morceau.
       if (e->current_data_offset == 0 && e->data_len == e->total_data_len && e->data_len < (int)kReqMax) {
         Request r;
@@ -338,6 +358,9 @@ void handleRequest(const char* text) {
     }
   } else if (op == "info") {
     buildFullInfo(res);
+  } else if (op == "ranking") {
+    ranking::toJson(res);
+    res["sub"] = rankSubOk_;
   } else {
     res["ok"] = false;
     res["msg"] = "Demande inconnue";
@@ -350,7 +373,8 @@ void handleRequest(const char* text) {
 // ait fini un essai de connexion (DNS, TLS, jusqu'à ~15 s). Si le réseau
 // coince, seul l'accès à distance attend ; les mesures et le Wi-Fi continuent.
 void task(void*) {
-  uint32_t lastInfo = 0, lastLive = 0, nextTry = 0, lowSince = 0;
+  uint32_t lastInfo = 0, lastLive = 0, nextTry = 0, lowSince = 0, lastRank = 0;
+  bool rankWas = false;
   uint8_t fails = 0;
   for (;;) {
     if (dirty_) {
@@ -427,6 +451,27 @@ void task(void*) {
       buildFullInfo(doc);
       publishJson(base_ + "info", doc, true);
     }
+    // Classement : résumé publié toutes les 10 min (retenu), abonnement aux autres.
+    const bool rankDirty = ranking::takeDirty();
+    const bool rankOn = ranking::enabled();
+    if (rankOn && !rankSub_) {
+      rankSubMsg_ = esp_mqtt_client_subscribe(client_, kRankTopic, 0);
+      rankSub_ = rankSubMsg_ >= 0;
+    } else if (!rankOn && rankSub_) {
+      esp_mqtt_client_unsubscribe(client_, kRankTopic);
+      rankSub_ = false;
+      rankSubOk_ = -1;
+      ranking::clearPeers();
+    }
+    if (!rankOn && (rankDirty || rankWas)) {
+      publish(base_ + "classement", "", true);  // message vide retenu : la station disparaît du classement
+    } else if (rankOn && (rankDirty || !rankWas || now - lastRank > CLOUD_RANK_MS)) {
+      lastRank = now;
+      JsonDocument doc;
+      if (ranking::buildSelf(*store_, doc)) publishJson(base_ + "classement", doc, true);
+    }
+    rankWas = rankOn;
+
     Sample s;
     if (xQueueReceive(sampleBox_, &s, 0) == pdTRUE) {
       // Les particules n'arrivent qu'une fois par cycle : jamais sautées.
@@ -458,6 +503,7 @@ String cleanHost(String h) {
 
 void yieldTls(uint32_t ms) { yieldUntil_ = (millis() + ms) | 1; }
 bool tlsActive() { return client_ != nullptr; }
+int rankSubscription() { return rankSubOk_; }
 
 void begin(DataStore* store, WifiManager* wifi, bool paused) {
   store_ = store;
@@ -514,6 +560,7 @@ void status(JsonObject out) {
   xSemaphoreGive(mutex_);
   out["ok"] = (bool)connected_;
   out["topic"] = base_;
+  if (rankSubOk_ >= 0) out["rank_sub"] = rankSubOk_ == 1;
   if (err_ && !connected_) out["err"] = (const char*)err_;
 }
 
