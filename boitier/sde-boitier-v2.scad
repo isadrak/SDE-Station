@@ -49,31 +49,34 @@ dos_ep = 2.5;        // épaisseur du dos (vis de socle fraisées affleurantes)
 rayon = 4;           // rayon des arêtes verticales extérieures
 $fn = 48;
 
-/* [Carte PCB : STEP de KiCad, vue côté composants, USB en haut] */
-pcb_l = 83;          // largeur du PCB (X)
-pcb_h = 53;          // hauteur du PCB (Y)
+/* [Carte V2 en bande : MH-Z1911A debout à gauche, DevKitC couché à droite, prise USB vers la droite] */
+pcb_l = 77;          // largeur du PCB (X) : passe entre les bossages des coins du haut
+pcb_h = 34;          // hauteur du PCB (Y)
 pcb_ep = 1.6;
-// Centres des 4 trous des coins (Ø 2,2 mm, vis M2), depuis le coin bas-gauche du PCB.
-// Au mur la carte est tournée de 180° par rapport au STEP : (83 - x, 53 - y).
-pcb_trous = [[79.65, 50.05], [5.0, 50.0], [79.75, 3.5], [5.0, 3.6]];
+// Trous Ø 2,2 mm (vis M2), depuis le coin bas-gauche du PCB : deux à gauche, un sous le
+// milieu du DevKitC (entre ses deux rangées de broches, à visser avant de l'enficher)
+pcb_trous = [[3.5, 3.5], [3.5, 30.5], [52, 17]];
+mhz = [19.7, 32.9, 8.6];   // MH-Z1911A (fiche V1.3), debout
+kit_l = 55.1;        // DevKitC V4 (STEP)
+kit_w = 27.94;
 pcb_vis_d = 1.8;     // avant-trou dans les plots pour vis M2 autotaraudeuse
 pcb_entretoise = 4;  // hauteur des plots sous le PCB (broches : 2 mm dessous)
 pcb_composants = 20; // plus haut point au-dessus du PCB (mesuré : 19,5)
-kit_bas = 5.9;       // le DevKitC dépasse du bord bas du PCB (STEP, côté antenne)
 
-/* [Port micro-USB de l'ESP32 : prise vers le bas, au-dessus de la chambre] */
+/* [Port micro-USB de l'ESP32 : vers la droite, rallonge à fiche COUDÉE (câble vers le bas)] */
+fiche_coude = 5;     // le câble de la fiche coudée descend à cette distance du bord du DevKitC
 usb_z = 13;          // centre du connecteur au-dessus du PCB (mesuré en V1, DevKitC sur barrettes femelles)
 // Prise USB-C sous le boîtier : rallonge courte (10-20 cm) micro-USB mâle -> USB-C
-// femelle, bout femelle moulé SANS oreilles, glissé dans un fourreau en bas à gauche de la chambre d'air frais.
+// femelle, bout femelle moulé SANS oreilles, glissé dans un fourreau en bas de la chambre d'air frais.
 // Cotes du bout femelle à confirmer au pied à coulisse, puis réexporter le corps.
 usbc_corps = [7.0, 13.0];   // section du bout femelle moulé : épaisseur (X) x largeur (Z)
 usbc_haut = 18;             // hauteur du fourreau
 usbc_levre = 0.6;           // lèvre en bas : retient la prise, la bouche affleure presque
 usbc_bouche = [4.2, 10.2];  // ouverture de la lèvre : coque de la fiche USB-C (2,6 x 8,4) + jeu
 usbc_paroi = 1.2;
-// Bouton BOOT du DevKitC, à côté de la prise (côté droit, prise vers le bas, vu de face)
-boot_dx = 8.5;       // depuis le centre de la prise (X) : DevKitC V4, EN à gauche et BOOT à droite de la prise vue de face ; à confirmer
-boot_dy = 4.5;       // depuis le bas du DevKitC (Y)
+// Bouton BOOT du DevKitC, à côté de la prise (DevKitC V4, prise vers la droite : BOOT au-dessus)
+boot_dy = 8.5;       // depuis le centre de la prise (Y) ; à confirmer sur la carte
+boot_dx = 4.5;       // depuis le bout du DevKitC côté prise (X)
 boot_haut = 13.7;    // dessus du bouton au-dessus du PCB (8,5 barrette + 1,6 + ~3,6 bouton)
 
 /* [SDS011 : mesuré (fiche technique : 71 x 70 x 23 avec la buse)] */
@@ -106,9 +109,8 @@ bme_h = 18;
 bme_trou_dx = 11;    // entraxe des 2 trous (Ø 3)
 bme_trou_y = 6;      // centre des trous depuis le bord du bas du module, côté puce (mesuré)
 bme_vis_d = 2.2;     // avant-trou pour vis M2,5 autotaraudeuse
-bme_bas = true;      // V2 : BME680 en bas de la chambre, loin de l'ESP32 (fil de 15 cm)
-chambre = 29;        // largeur intérieure de la chambre d'air frais (prise USB-C à gauche, BME680 à droite) ;
-                     // fixe aussi la largeur : la carte de 83 mm doit passer entre les bossages du haut
+bme_bas = true;      // V2 : BME680 en bas de la chambre, loin de l'ESP32, au-dessus de la prise USB-C
+chambre = 24;        // largeur intérieure de la chambre d'air frais (BME680 à gauche, rallonge USB à droite)
 
 /* [Bande LED et socle] */
 socle_ep = 18;       // distance dos du boîtier -> plaque murale (profondeur du halo)
@@ -170,7 +172,7 @@ y_cloison = sds_y1 + galerie;                    // bas de la cloison (galerie a
 bas_h = y_cloison - paroi;
 
 // Compartiment électronique : DevKitC qui dépasse en bas (prise USB vers le bas), PCB à 0,5 mm de la paroi du haut
-haut_h = kit_bas + 1.5 + pcb_h + 0.5;
+haut_h = 1 + pcb_h + 0.5;
 H = paroi + bas_h + cloison + haut_h + paroi;
 int_p = max(pcb_entretoise + pcb_ep + pcb_composants, sds_cale + sds_z + 1) + 1;  // profondeur intérieure
 P = dos_ep + int_p;   // profondeur du corps (sans capot)
@@ -183,7 +185,7 @@ y_haut1 = H - paroi;
 mur_x = sds_x1 + jeu;
 ch_x0 = mur_x + mur;
 ch_x1 = L - paroi;
-usb_x = ch_x0 + usbc_corps[0] / 2 + 0.2 + usbc_paroi + 0.6;   // centre de la prise du DevKitC et de la prise USB-C (X)
+usbc_x = L - bos_int - 0.5 - usbc_corps[0] / 2 - 0.2 - usbc_paroi;   // prise USB-C : juste à gauche du bossage du coin bas-droit
 usb_zc = dos_ep + pcb_entretoise + pcb_ep + usb_z;
 // Capteur tourné d'un quart de tour : (x, y) de la fiche -> (y, sds_x - x)
 sds_trous = [for (t = sds_trous_fiche) [t[1], sds_x - t[0]]];
@@ -194,20 +196,26 @@ usbc_z0 = dos_ep + 1;                       // fond du logement de la prise USB-
 encoche = buse_d + 0.4;   // encoche de la paroi gauche pour la buse (ouverte vers l'avant, fermée par la languette du capot)
 
 // BME680 (vis en bas du module, fil en haut)
-bme_x0 = ch_x1 - 2 - bme_l;   // à droite de la chambre (la rallonge USB monte à gauche)
-bme_y0 = bme_bas ? paroi + 12 : y_cloison - 2 - bme_h;
+bme_x0 = ch_x0 + 0.5;   // à gauche de la chambre (la rallonge USB descend le long de la paroi droite)
+bme_y0 = bme_bas ? paroi + usbc_levre + usbc_haut + 6 : y_cloison - 2 - bme_h;
 bme_trous = [for (s = [-1, 1]) [bme_x0 + bme_l / 2 + s * bme_trou_dx / 2, bme_y0 + bme_trou_y]];
-fente_x = usb_x;        // fente de la cloison : la fiche micro-USB de la rallonge la traverse
 
 // PCB
-pcb_x0 = bos_int + 1;      // calée à gauche : le DevKitC (à droite) reste sur la carte   // la carte V2 place la prise du DevKitC à usb_x (voir LISEZMOI)
+pcb_x0 = bos_int + 1;
 pcb_y0 = y_haut1 - 0.5 - pcb_h;
 pcb_z0 = dos_ep + pcb_entretoise;
+// DevKitC couché, aligné sur le bord droit de la carte ; MH-Z1911A à gauche
+kit_x1 = pcb_x0 + pcb_l + 0.1;     // bout du DevKitC côté prise
+kit_x0 = kit_x1 - kit_l;
+kit_yc = pcb_y0 + pcb_h / 2;
+mhz_x0 = pcb_x0 + 0.5;
+usb_x = kit_x1 + fiche_coude;      // le câble de la rallonge descend ici
+fente_x = min(usb_x, ch_x1 - 4.35);   // fente de la cloison (8,5 x 12) : la fiche coudée de la rallonge la traverse
 
-// Vis du capot : 4 coins + 2 au niveau de la cloison
+// Vis du capot : 4 coins + 1 au niveau de la cloison à gauche (à droite passe la rallonge)
 vis_capot = [
   [bc, bc], [L - bc, bc], [bc, H - bc], [L - bc, H - bc],
-  [bc, y_cloison + cloison / 2], [L - bc, y_cloison + cloison / 2]];
+  [bc, y_cloison + cloison / 2]];
 
 // Vis du socle (depuis l'intérieur du corps, têtes fraisées dans le dos)
 sv = socle_retrait + socle_paroi + 6;
@@ -217,9 +225,8 @@ vis_socle = [[sv, sv + 8], [L - sv - 8, sv + 8], [L / 2 - 25, H - sv], [L / 2 + 
 trou_led = [L / 2, H - 14];
 led_oblong = [10, 6];   // V1 : Ø 6, trop juste pour les 3 fils et leur gaine
 
-// Prise USB et bouton BOOT (DevKitC tourné, prise vers le bas, juste au-dessus de la cloison)
-kit_y0 = y_cloison + cloison + 1.5;         // bas du DevKitC
-boot = [usb_x + boot_dx, kit_y0 + boot_dy];
+// Bouton BOOT (DevKitC couché, prise vers la droite)
+boot = [kit_x1 - boot_dx, kit_yc + boot_dy];
 
 // Rainure de la glissière : au centre, ouverte en bas du socle
 rainure_long = rail_long + 2;
@@ -275,8 +282,8 @@ module corps() {
         translate([paroi, y_cloison, 0]) cube([int_l, cloison, P]);
         translate([paroi + 3, y_cloison + cloison_mur, dos_ep]) cube([int_l - 6, cloison_air, P]);
       }
-      // Fourreau de la prise USB-C, en bas à gauche de la chambre
-      translate([usb_x - usbc_corps[0] / 2 - 0.2 - usbc_paroi, paroi - 0.01, 0])
+      // Fourreau de la prise USB-C, en bas de la chambre
+      translate([usbc_x - usbc_corps[0] / 2 - 0.2 - usbc_paroi, paroi - 0.01, 0])
         cube([usbc_corps[0] + 0.4 + 2 * usbc_paroi, usbc_haut + usbc_levre, usbc_z0 + usbc_corps[1] + 0.4 + 1.5]);
       // Mur entre le SDS011 et la chambre d'air frais
       translate([mur_x, paroi - 0.01, 0]) cube([mur, bas_h + 0.02, P]);
@@ -308,16 +315,16 @@ module corps() {
     translate([bos_int + 1, y_cloison - 1, dos_ep]) cube([sds_x1 - bos_int - 2, cloison + 2, P]);
     // Prise USB-C : fourreau ouvert vers l'avant (la prise s'y glisse avant de
     // fermer le capot, un point de colle chaude la tient) et bouche sous le boîtier
-    translate([usb_x - (usbc_corps[0] + 0.4) / 2, paroi + usbc_levre - paroi, usbc_z0])
+    translate([usbc_x - (usbc_corps[0] + 0.4) / 2, paroi + usbc_levre - paroi, usbc_z0])
       cube([usbc_corps[0] + 0.4, usbc_haut + paroi + 1, P]);
-    translate([usb_x, -1, usbc_z0 + 0.2 + usbc_corps[1] / 2]) rotate([-90, 0, 0])
+    translate([usbc_x, -1, usbc_z0 + 0.2 + usbc_corps[1] / 2]) rotate([-90, 0, 0])
       oblong(usbc_bouche[0], usbc_bouche[1], paroi + usbc_levre + 1.01);
     // Rallonge USB et fils du BME680 : fente dans la cloison où passent la fiche
-    // micro-USB (11 x 7) et une fiche JST 4 broches (XH : 12,4 x 5,8), à boucher
+    // coudée (~ 7 x 11) et une fiche JST 4 broches (XH : 5,8 x 12,4), à boucher
     // au mastic une fois les fils passés
-    translate([fente_x - 6.5, y_cloison - 1, usb_zc - 4]) cube([13, cloison + 2, 8]);
+    translate([fente_x - 4.25, y_cloison - 1, usb_zc - 6]) cube([8.5, cloison + 2, 12]);
     // Chambre d'air frais : fentes en bas (à droite de la prise) et sur la droite
-    for (i = [0 : 2]) translate([ch_x0 + 11 + i * 4, -1, dos_ep + 3]) cube([2, paroi + 2, int_p - 6]);
+    for (i = [0 : 2]) translate([ch_x0 + 2 + i * 4, -1, dos_ep + 3]) cube([2, paroi + 2, int_p - 6]);
     for (i = [0 : 5]) let(y = bos_int + 4 + i * (bas_h - 2 * bos_int) / 5)
       fente_laterale(L - paroi, y, dos_ep + 4, int_p - 8, -1);
     // Aération du compartiment électronique : entrée en bas, sortie en haut, des deux côtés
@@ -346,11 +353,13 @@ module guides_sds() {
 }
 
 // Vérifications : la fente du BME680 évite le bossage de la cloison à droite
-assert(fente_x + 13 / 2 < L - bos_int, "fente de la cloison sur le bossage");
-assert(fente_x - 13 / 2 > mur_x, "fente de la cloison au-dessus du SDS011");
-assert(bme_x0 > usb_x + 4, "BME680 sur le passage de la rallonge");
+assert(fente_x + 4.25 < ch_x1 && fente_x - 4.25 > ch_x0, "fente de la cloison hors de la chambre");
+assert(bme_x0 + bme_l < usb_x - 2.5, "BME680 sur le passage de la rallonge");
 assert(pcb_x0 + pcb_l < L - bos_int, "la carte touche les bossages du haut");
-assert(usb_x + 27.94 / 2 < pcb_x0 + pcb_l - 1, "le DevKitC dépasse de la carte");
+assert(usb_x + 4 < ch_x1, "la fiche coudée touche la paroi droite");
+assert(mhz_x0 + mhz[0] + 1 < kit_x0, "MH-Z1911A sur le DevKitC");
+assert(kit_yc + 5.5 < H - bos_int, "la fiche coudée touche le bossage du coin haut-droit");
+assert(mhz[1] < pcb_h, "MH-Z1911A plus haut que la carte");
 
 // ------------------------------------------------------------------ Capot
 
@@ -492,20 +501,13 @@ module support() {
 // S'imprime base sur le plateau (la pièce « pied » est exportée dans ce sens).
 
 pied_h = pied_leve + plaque_h;
-// Passage du câble USB-C à travers la plaque du pied : le câble descend de la
-// prise, passe sous le boîtier et part directement vers l'arrière
-pied_passe_x = 18.5;  // centre du passage (la prise est à usb_x - L/2 du centre ; le câble se courbe de quelques mm)
-pied_passe = [13, 16]; // largeur, hauteur au-dessus de la base
+// Câble USB-C : la prise est à usbc_x - L/2 du centre, hors de la plaque du pied ;
+// le câble descend à côté de la plaque et part tout droit vers l'arrière
 module pied() intersection() {
   translate([-500, 0, -500]) cube(1000);   // rien sous la table
-  difference() {
-    pied_brut();
-    rotate([-pied_incl, 0, 0]) translate([pied_passe_x - pied_passe[0] / 2, pied_ep - 1, -1])
-      linear_extrude(pied_ep + 2) rrect(pied_passe[0], pied_passe[1] + 1, 3);
-  }
+  pied_brut();
 }
-assert(pied_passe_x + pied_passe[0] / 2 < plaque_l / 2 - 5, "passage du câble sur l'équerre du pied");
-assert(pied_passe_x - pied_passe[0] / 2 > rail_base / 2, "passage du câble sous le rail");
+assert(abs(usbc_x - L / 2) - 2.5 > plaque_l / 2, "la prise USB-C tombe sur la plaque du pied : prévoir un passage");
 module pied_brut() {
   // Plaque inclinée et rail (même rail que le support mural)
   rotate([-pied_incl, 0, 0]) {
@@ -593,15 +595,18 @@ module fantomes() {
   // PCB, DevKitC et MH-Z19B (positions du STEP tournées de 180°), sur connecteurs femelles de 8,5 mm
   color("ForestGreen", 0.8) translate([pcb_x0, pcb_y0, pcb_z0]) cube([pcb_l, pcb_h, pcb_ep]);
   // DevKitC prise vers le bas, au-dessus de la chambre (carte V2 à dessiner en conséquence)
-  color("RoyalBlue", 0.8) translate([usb_x - 27.94 / 2, kit_y0, pcb_z0 + pcb_ep + 8.5]) cube([27.94, 55.1, 1.6]);
-  color("Silver") translate([usb_x - 4, kit_y0 - 0.5, usb_zc - 1.5]) cube([8, 5.5, 3]);
+  color("RoyalBlue", 0.8) translate([kit_x0, kit_yc - kit_w / 2, pcb_z0 + pcb_ep + 8.5]) cube([kit_l, kit_w, 1.6]);
+  color("Silver") translate([kit_x1 - 5, kit_yc - 4, usb_zc - 1.5]) cube([5.5, 8, 3]);
   color("Red") translate([boot[0], boot[1], pcb_z0 + pcb_ep + boot_haut - 2]) cylinder(d = 3, h = 2);
-  // Rallonge : fiche micro-USB dans le DevKitC, câble dans la chambre, prise USB-C dans son fourreau
-  color("Black", 0.6) translate([usb_x - 5.5, kit_y0 - 0.5 - 9, usb_zc - 3.5]) cube([11, 9, 7]);
-  color("Black", 0.6) translate([usb_x - usbc_corps[0] / 2, usbc_levre, usbc_z0 + 0.2]) cube([usbc_corps[0], usbc_haut + 3, usbc_corps[1]]);
-  color("Black", 0.6) hull() {
-    translate([usb_x, usbc_levre + usbc_haut + 3, usbc_z0 + 0.2 + usbc_corps[1] / 2]) sphere(d = 3.2);
-    translate([usb_x, kit_y0 - 9.5, usb_zc]) sphere(d = 3.2);
+  // MH-Z1911A debout sur la carte
+  color("Gold", 0.8) translate([mhz_x0, pcb_y0 + (pcb_h - mhz[1]) / 2, pcb_z0 + pcb_ep + 2]) cube([mhz[0], mhz[1], mhz[2]]);
+  // Rallonge : fiche coudée dans le DevKitC, câble le long de la paroi droite de la chambre, prise USB-C dans son fourreau
+  color("Black", 0.6) translate([kit_x1 + 0.5, kit_yc - 12, usb_zc - 3.5]) cube([2 * fiche_coude - 2, 16, 7]);
+  color("Black", 0.6) translate([usbc_x - usbc_corps[0] / 2, usbc_levre, usbc_z0 + 0.2]) cube([usbc_corps[0], usbc_haut + 3, usbc_corps[1]]);
+  color("Black", 0.6) {
+    yt = usbc_levre + usbc_haut + 3; zt = usbc_z0 + 0.2 + usbc_corps[1] / 2;
+    hull() { translate([usbc_x, yt, zt]) sphere(d = 3.2); translate([usb_x, yt + 4, usb_zc]) sphere(d = 3.2); }
+    hull() { translate([usb_x, yt + 4, usb_zc]) sphere(d = 3.2); translate([usb_x, kit_yc - 12.5, usb_zc]) sphere(d = 3.2); }
   }
   // BME680
   color("Purple", 0.8) translate([bme_x0, bme_y0, dos_ep + 5]) cube([bme_l, bme_h, 1.6]);
