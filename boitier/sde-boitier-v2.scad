@@ -494,8 +494,8 @@ module support() {
 pied_h = pied_leve + plaque_h;
 // Passage du câble USB-C à travers la plaque du pied : le câble descend de la
 // prise, passe sous le boîtier et part directement vers l'arrière
-pied_passe_x = 20;    // centre du passage (la prise est à usb_x - L/2 du centre ; le câble se courbe de quelques mm)
-pied_passe = [10, 14]; // largeur, hauteur au-dessus de la base
+pied_passe_x = 18.5;  // centre du passage (la prise est à usb_x - L/2 du centre ; le câble se courbe de quelques mm)
+pied_passe = [13, 16]; // largeur, hauteur au-dessus de la base
 module pied() intersection() {
   translate([-500, 0, -500]) cube(1000);   // rien sous la table
   difference() {
