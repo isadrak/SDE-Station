@@ -6,7 +6,7 @@ Ce guide accompagne le [README](../README.md). Les fichiers binaires (firmware `
 
 | Dossier | Rôle |
 |---|---|
-| `firmware/` | Firmware de l'ESP32-DevKitC-32E (MH-Z19B, SDS011, BME680, Wi-Fi) |
+| `firmware/` | Firmware de l'ESP32-DevKitC-32E (MH-Z19B ou MH-Z1911A, SDS011, BME680, Wi-Fi) |
 | `sde-firmware-X.Y.Z-merged.bin` (Releases) | Firmware complet, pour le flash par USB à l'adresse `0x0` |
 | `sde-firmware-X.Y.Z-ota.bin` (Releases) | Le même firmware, pour la mise à jour par Wi-Fi |
 | `boitier/` | Boîtier imprimable en 3D, socle avec bande LED, support mural coulissant et pied de table (voir `boitier/LISEZMOI.md`) |
@@ -28,7 +28,7 @@ Si Windows ne voit pas l'ESP32, installe le pilote « CP210x USB to UART » de S
 
 ## 2. Utiliser la station en Wi-Fi
 
-Branche la station sur n'importe quel chargeur USB 5 V (1 A ou plus, à cause du ventilateur du SDS011).
+Branche la station sur n'importe quel chargeur USB 5 V (1 A ou plus, à cause du ventilateur du SDS011). Sur la V2, le câble USB-C se branche dans la prise sous le boîtier, sans l'ouvrir.
 
 **Connexion directe (partout, sans box) :**
 1. Sur ton téléphone ou ton ordinateur, connecte-toi au Wi-Fi **SDE-XXXX** (les 4 derniers caractères changent d'une carte à l'autre). Mot de passe par défaut : **sde-station**.
@@ -88,12 +88,14 @@ Pour reconstruire l'APK (sans Android Studio, sous Linux) : `apt install android
 
 **Depuis l'application :** onglet **Réglages**, section **Mise à jour**. Choisis le fichier `sde-firmware-X.Y.Z-ota.bin` (pas le « merged »), entre le mot de passe du Wi-Fi de la station et clique sur **Installer**. La station vérifie le fichier, l'installe, puis redémarre. Réglages et historique sont conservés. Si l'envoi est coupé, l'ancienne version reste en place.
 
+**Passage à la 0.10.0 :** cette version utilise une nouvelle table de partitions (programme de 1,5 Mo au lieu de 1,25 Mo). Elle s'installe une seule fois par câble USB avec le `-merged.bin` (section 1) ; l'appli refuse le `-ota.bin` sur une station encore en 0.9.x. Le Wi-Fi, le nom de la pièce et les réglages sont conservés, l'historique est effacé (la zone de stockage change de place). Les versions suivantes repassent par le Wi-Fi.
+
 **En ligne de commande** (ordinateur sur le même réseau que la station) : `curl -F "f=@sde-firmware-X.Y.Z-ota.bin" "http://sde.local/api/update?pass=<mot de passe>"`.
 
 ## 6. Historique et heure
 
 - **Heure réelle :** quand la station est sur le Wi-Fi de la maison, elle prend l'heure sur Internet (NTP) et la remet à jour régulièrement. Sinon, l'application lui donne l'heure du téléphone ou de l'ordinateur à chaque connexion. Le fuseau est celui du Québec (`TIMEZONE` dans `config.h`).
-- **Historique en flash :** la station garde une moyenne par minute pendant 30 jours. Elle l'écrit en flash toutes les 5 minutes, donc une coupure de courant fait perdre au plus 5 minutes. Les minutes mesurées avant de connaître l'heure restent en RAM et sont datées puis écrites dès que l'heure arrive.
+- **Historique en flash :** la station garde une moyenne par minute pendant 20 jours (30 jours avant la 0.10.0). Elle l'écrit en flash toutes les 5 minutes, donc une coupure de courant fait perdre au plus 5 minutes. Les minutes mesurées avant de connaître l'heure restent en RAM et sont datées puis écrites dès que l'heure arrive.
 - **Graphiques 7 j et 30 j :** l'application relit l'historique de la station, en moyennes de 5 min (7 jours) ou de 15 min (30 jours). La lecture peut prendre une dizaine de secondes : un indicateur de chargement s'affiche sur les graphiques pendant ce temps.
 - **Export :** onglet **Réglages**, section **Mes données**, **Télécharger**. Le fichier contient tout l'historique, avec l'heure UTC et l'heure locale, et peut être réimporté dans l'application.
 - **Remise à zéro :** **Effacer l'historique**, dans la même section. Le mot de passe du Wi-Fi de la station est demandé.
@@ -175,7 +177,10 @@ La station garde la cause de ses 7 derniers démarrages. L'appli affiche un band
 - **Bande LED :** le firmware commande 22 LED par défaut (réglable dans Réglages > Lumière murale > Nombre de LED, jusqu'à 120). Une bande plus longue que le nombre réglé doit être coupée au milieu des pastilles de cuivre : les LED au-delà ne reçoivent pas d'ordre et certaines bandes les allument au hasard à la mise sous tension, ce qui peut tirer assez de courant pour provoquer des chutes de tension. Au démarrage, le firmware éteint les 120 premières LED, puis allume la bande en douceur après 3 s. Animations : en temps normal, la couleur de l'air respire très lentement et de façon irrégulière d'une LED à l'autre (toute la bande respire doucement en environ 8 s, de 50 à 100 % de lumière, et des taches de la couleur de la note suivante glissent le long de la bande, d'autant plus que la mesure s'approche du seuil : vert pur quand l'air est bon, jaune qui gagne la bande juste avant le passage au jaune, puis rouge qui commence à circuler) ; couleurs de l'échelle de l'air qui défilent lentement au démarrage, barre de progression bleue pendant une mise à jour, houle bleue lente (une respiration toutes les 6 s, fondu de 3 s à l'entrée et à la sortie) qui traverse la couleur actuelle tant qu'une aération est détectée (même règle que l'appli : au moins 100 ppm sous le pic des 40 dernières minutes, à 10 ppm/min ou plus, et encore en baisse sur les 3 dernières minutes), propagation de la nouvelle couleur quand la note change, point plus clair qui glisse pendant une mesure des poussières, et pulsation douce par le bouton « Faire clignoter » de l'appli (commande `led.find`). Protection : après 2 chutes de tension d'affilée, la bande reste éteinte (courant plafonné à 300 mA en temps normal) et l'appli l'indique dans Lumière murale ; bouger le curseur de luminosité la rallume. Alimentation : broche 5V de l'ESP32 (rouge = 5V, blanc = GND, vert = DIN sur les bandes courantes) ; vérifier qu'aucune goutte d'étain ne touche la broche voisine CMD.
 - **MH-Z19B qui ne répond pas :** la pastille de l'application indique combien d'octets le capteur a renvoyés. 0 octet veut dire qu'aucun signal n'arrive (alimentation, GND ou fils TX/RX). Si RX et TX sont croisés à l'envers, le firmware les inverse tout seul et l'application le signale dans le journal.
 - **Plage du CO2 :** au démarrage, le firmware règle le MH-Z19B sur 0 à 5000 ppm (commande 0x99, `CO2_RANGE_PPM` dans `config.h`). Certains modules sortent d'usine en 0 à 2000 ppm et plafonnent alors à 2000. La carte Capteurs de l'application affiche la plage, relue dans le capteur quand il le permet.
-- **Calibration CO2 :** l'auto-calibration (ABC) est désactivée à chaque démarrage, puis son état est relu dans le capteur (commande 0x7D) et affiché dans l'onglet Réglages, section Capteurs (vue ingénieur). Si tu l'actives depuis l'application, elle redevient désactivée au prochain redémarrage. Pour calibrer, laisse la station 20 minutes à l'air extérieur, puis utilise le bouton « Calibrer le CO2 à 400 ppm ».
+- **Calibration CO2 :** l'auto-calibration (ABC) est désactivée à chaque démarrage, puis son état est relu dans le capteur (commande 0x7D) et affiché dans l'onglet Réglages, section Capteurs (vue ingénieur). Si tu l'actives depuis l'application, elle redevient désactivée au prochain redémarrage. Calibration guidée (0.10.0) : poser la station dehors (à l'abri de la pluie) ou devant une fenêtre grande ouverte, puis Réglages › Avancé › Calibrer. La station attend au moins 20 minutes que la moyenne reste sous 550 ppm et stable à 25 ppm près pendant 5 minutes, puis se calibre seule à 400 ppm ; elle abandonne après 1 heure. Le MH-Z1911A n'a pas d'auto-calibration réglable.
+- **Correction de température (0.10.0) :** Réglages › Avancé. Les degrés indiqués sont retirés à la mesure du BME680 (auto-échauffement dans le boîtier) et l'humidité est recalculée pour la même quantité d'eau. À régler contre un thermomètre fiable posé à côté, après 1 heure de fonctionnement.
+- **Alertes sur le téléphone (0.10.0) :** Réglages › Alertes. La station envoie elle-même un message par [ntfy](https://ntfy.sh) quand le CO2 moyen dépasse le seuil (1200 ppm par défaut) pendant 10 minutes, ou l'humidité (60 %) pendant 3 heures. Il faut l'appli ntfy et un abonnement au sujet affiché ; le sujet, tiré au hasard, sert de mot de passe. Une alerte ne revient qu'une fois la valeur redescendue, au plus toutes les 3 h (CO2) ou 12 h (humidité). Si l'accès à distance est connecté, il est coupé 30 secondes le temps de l'envoi (mémoire).
+- **Bouton BOOT (0.10.0) :** un appui de 8 à 20 secondes, relâché après le clignotement de la bande, remet le Wi-Fi au réglage d'usine (réseau de la maison oublié, mot de passe `sde-station`). Un appui plus long est ignoré.
 - **Indice COV :** il est relatif (100 = air le plus propre vu depuis le démarrage). Ce n'est pas l'IAQ calibré de Bosch BSEC, et il lui faut 10 à 30 minutes pour se stabiliser. Si la station passe dehors, l'air froid et propre fixe une référence très haute et l'indice reste bas une fois rentrée, pendant quelques heures. Un redémarrage remet la référence à zéro. La résistance du capteur est lissée sur environ 1 min avant le calcul.
 - **Redémarrer et réinitialiser :** onglet **Réglages**, section **Avancé**. **Redémarrer** garde tout. **Réinitialisation d'usine** (mot de passe de la station demandé) efface le Wi-Fi de la maison, le mot de passe du point d'accès (il redevient `sde-station`) et tout l'historique. La station n'est alors joignable que sur son Wi-Fi SDE-XXXX, à `http://192.168.4.1`.
 
@@ -210,6 +215,8 @@ Exemple de ligne :
 | Capteur | ESP32 |
 |---|---|
 | MH-Z19B TX / RX | IO16 (RX) / IO17 (TX) |
+| MH-Z1911A (V2, mode I2C : R/T à la masse) TX-SDA / RX-SCL | IO16 / IO17 (Wire1, 10 kHz, adresse 0x31 ; sens inversé automatiquement) |
+| Bouton BOOT | IO0 |
 | SDS011 TX / RX | IO26 (RX) / IO27 (TX) |
 | BME680 SDA / SCL | IO21 / IO22 |
 | Bande LED WS2812B (DIN) | IO18, à travers 330 Ω |
@@ -225,7 +232,7 @@ Si tu modifies `app/sw.js`, change aussi le nom du cache pour que les téléphon
 
 L'appli en ligne (GitHub Pages) se met à jour toute seule à chaque push qui touche `app/`.
 
-`gen_assets.js` retire l'indentation et les lignes de commentaire de la page avant de la compresser (environ 7 ko de gagnés) : le fichier `app/sde-analyse.html` reste lisible. Le firmware 0.9.9 occupe 99 % de la place réservée au programme (1,25 Mo, table de partitions par défaut). Pour ajouter beaucoup plus, il faudra passer à une table avec un programme plus grand, ce qui demande un flash par USB.
+`gen_assets.js` retire l'indentation et les lignes de commentaire de la page avant de la compresser (environ 7 ko de gagnés) : le fichier `app/sde-analyse.html` reste lisible. Depuis la 0.10.0, `firmware/partitions.csv` réserve 1,5 Mo au programme (deux emplacements pour la mise à jour par Wi-Fi), 896 ko à LittleFS et 64 ko au vidage mémoire ; la 0.10.0 en occupe 1,35 Mo.
 
 ## Suite
 

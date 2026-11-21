@@ -170,9 +170,9 @@ Quelques problèmes rencontrés en route et comment je les ai trouvés :
 
 ## Suite
 
-- Monter la bande LED (commandée) sur la carte V1, avec un fil soudé sur IO18.
-- PCB V2 : routage du GND du MH-Z19B, résistances de tirage I2C corrigées, sortie pour la bande LED (74AHCT1G125, 1000 µF).
-- Table de partitions plus grande pour faire de la place au programme.
+- PCB V2 : routage du GND du capteur de CO2, résistances de tirage I2C corrigées, sortie pour la bande LED, DevKitC tourné prise USB vers le bas, R/T du MH-Z1911A à la masse (mode I2C) et tirages 4,7 kΩ sur IO16/IO17.
+- Station V2 (firmware 0.10.0, à valider sur la carte) : table de partitions avec un programme de 1,5 Mo (flash USB obligatoire, historique ramené à 20 jours), MH-Z1911A lu en I2C et détecté automatiquement face au MH-Z19B, calibration du CO2 guidée, correction de température, alertes ntfy (CO2 et humidité), bouton BOOT 8 s pour remettre le Wi-Fi à zéro, résumé de la semaine dans l'appli.
+- Boîtier V2 (`boitier/sde-boitier-v2.scad`) et outil de mise en service à l'atelier (`tools/atelier/`).
 - Tableau de bord InfluxDB + Grafana abonné aux mêmes sujets MQTT.
 
 ---

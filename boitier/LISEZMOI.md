@@ -84,3 +84,45 @@ Visserie :
 Ordre de montage : bande sur le socle, socle sur le corps, SDS011 (buse dans l'encoche), BME680, carte, câbles dans la cloison puis mousse, antenne collée contre la paroi droite, capot.
 
 Pour modifier une cote : ouvrir `sde-boitier.scad` dans OpenSCAD, choisir la pièce avec `piece` (`interieur` et `sur_table` affichent l'ensemble monté), F6, puis export STL.
+
+## Version 2 (`sde-boitier-v2.scad`, `stl-v2/`)
+
+![Corps V2](apercu-v2/corps.png)
+
+Même principe que la V1, avec les corrections relevées sur les deux premières stations. À imprimer en PETG. Encombrement : 99,9 × 136 mm de face (V1 : 103,9 × 148,1), 29,1 mm de corps sans le capot. Impression estimée (PrusaSlicer, PETG, 0,2 mm, 20 %, 3 périmètres) : environ 17 h 30 et 184 g pour la version murale (corps 8 h 30, capot 3 h, socle 4 h 05, support 1 h, diffuseur 50 min), pied 4 h 20. Aucune pièce ne demande de supports.
+
+| Changement | Détail |
+|---|---|
+| Inserts laiton M3 à chaud | Trous de 4,0 mm sur 6,5 mm dans le corps (capot) et le socle (corps) ; bossages élargis à 9,2 mm (`inserts = false` revient aux vis directes). |
+| SDS011 tourné | Capteur tourné d'un quart de tour (sens horaire, vu de face) par rapport à sa fiche. Le connecteur et la sortie du ventilateur sont en haut : le câble d'origine se branche droit, sans soudure, et ses fils montent tout droit vers la carte. La buse est en bas : elle entre dans une encoche qui débouche sous le boîtier (fermée à l'avant par une languette du capot) et aspire directement l'air de la pièce, sans conduit. Un peu de mastic ou de mousse autour de la buse rend l'entrée étanche. |
+| Galerie de 12 mm | Au-dessus du SDS011 : place pour la fiche du connecteur, quelle que soit sa position sur la face. La cloison est largement ouverte au-dessus du capteur : l'air rejeté par le ventilateur monte, ventile l'électronique et sort par les fentes du haut et par dix fentes du capot, loin de la chambre d'air frais. |
+| USB-C en bas | DevKitC couché, prise vers la droite. Une rallonge courte (10 à 20 cm, micro-USB mâle COUDÉE à 90° vers le bas, vers USB-C femelle, qui transmet les données et pas seulement le courant) descend par une fente de 8,5 × 12 mm dans la cloison (à boucher au mastic) puis le long de la paroi droite de la chambre. Son bout femelle moulé, sans oreilles, se glisse par l'avant dans un fourreau en bas de la chambre (section prévue 7 × 13 mm, `usbc_corps`, à ajuster au pied à coulisse) et se tient avec un point de colle chaude ; une lèvre de 0,6 mm le retient et laisse passer la fiche. Le client branche son câble USB-C sans ouvrir le boîtier ; le flash par USB et l'appli par câble passent aussi par là. Sur le pied, la prise tombe à côté de la plaque : le câble descend et part tout droit vers l'arrière, sans contourner le pied. |
+| Chambre d'air frais | Fermée en haut par une cloison double (lame d'air de 3 mm) qui la sépare de l'électronique, ouverte sur la pièce par le bas, la paroi droite et le capot. Largeur 24 mm : BME680 à gauche, au-dessus de la prise USB-C (fils d'environ 10 cm, passés par la même fente que la rallonge), rallonge le long de la paroi droite. Avec la correction de température réglable dans l'appli (Réglages › Avancé). |
+| Carte V2 en bande | 77 × 34 mm au lieu de 83 × 53 : MH-Z1911A debout à gauche, DevKitC couché à droite. Le compartiment du haut passe de 61 à 35,5 mm. Cotes pour KiCad dans la section suivante. |
+| Clip du support | Lame souple taillée dans le flanc droit du rail (support et pied), avec un bossage qui tombe dans un creux de la rainure en bout de course. |
+| Trou de la bande LED | Oblong 10 × 6 mm dans le dos et le socle (Ø 6 trop juste en V1). |
+| Bouton Wi-Fi | Trou Ø 1,6 dans le capot et guide jusqu'au bouton BOOT (à droite de la prise, vue de face, sur le DevKitC V4) : trombone enfoncé 8 à 20 s puis relâché = Wi-Fi remis à zéro. Position à confirmer avec la carte V2 (`boot_dx`, `boot_dy`). |
+| Logo | Trois vagues de l'icône de l'appli gravées sous « SDE ». |
+| Diffuseur | Pièce `diffuseur` en PETG naturel : jupe à 4 mm des flancs du socle, devant la bande, serrée par une lèvre côté mur. |
+
+### Carte V2 en bande : cotes pour KiCad
+
+Repère : coin bas-gauche de la carte, vue côté composants, telle qu'elle est posée au mur.
+
+| Élément | Cote |
+|---|---|
+| Carte | 77 × 34 mm, 1,6 mm, sur plots de 4 mm (broches : 2 mm dessous au plus) |
+| Trous de fixation | Ø 2,2 mm (vis M2) en (3,5 ; 3,5), (3,5 ; 30,5) et (52 ; 17). Le troisième est sous le DevKitC, entre ses deux rangées de broches : visser avant de l'enficher. |
+| DevKitC V4 | Couché, prise micro-USB vers la droite, centré en hauteur (axe y = 17). Son bout côté prise dépasse de 0,1 mm du bord droit de la carte : il occupe x = 22 à 77,1. Barrettes femelles de 8,5 mm. |
+| MH-Z1911A | Debout (19,7 × 32,9 mm), x = 0,5 à 20,2, centré en hauteur. |
+| Connecteurs JST (SDS011, BME680, bande LED) | Sous le DevKitC, entre ses rangées de broches (7,5 mm de haut au plus : JST XH droit, 7 mm, convient), à brancher avant d'enficher le DevKitC ; ou coudés sur le bord bas de la carte. Les fils du SDS011 arrivent par le bas à gauche (galerie), ceux du BME680 et la rallonge par le bas à droite. |
+| Hauteur des composants | 20 mm au plus au-dessus de la carte. |
+| Bouton BOOT | Trou de trombone dans le capot à 4,5 mm du bout du DevKitC et 8,5 mm au-dessus de l'axe de la prise (`boot_dx`, `boot_dy`, à confirmer sur le DevKitC). |
+
+Les positions de la prise USB et du bouton BOOT dépendent de la carte V2 (en cours sous KiCad) : les régler en tête du fichier une fois la carte dessinée, puis réexporter les STL :
+
+```
+for p in corps capot socle support pied diffuseur; do
+  openscad -o stl-v2/sde-v2-$p.stl -D "piece=\"$p\"" sde-boitier-v2.scad
+done
+```

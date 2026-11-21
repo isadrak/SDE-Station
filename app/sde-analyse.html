@@ -291,6 +291,8 @@ tbody tr:last-child td { border-bottom: 0; }
 .setting.col > :last-child { flex: auto; }
 .kv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, max-content); gap: 8px 16px; margin: 0; padding: 14px 0; }
 .kv dt { color: var(--text-muted); }
+#weekKv { grid-template-columns: max-content minmax(0, 1fr); }
+#weekKv dd { text-align: right; }
 .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips button { border: 1px solid var(--border); background: var(--surface-1); border-radius: 999px; padding: 7px 14px; min-height: 36px; cursor: pointer; font-weight: 550; }
@@ -550,6 +552,11 @@ tbody tr:last-child td { border-bottom: 0; }
         <ul class="recs compact" id="homeRecsList"></ul>
         <div class="recs-foot"><button class="link-btn" id="btnAllRecs">Voir l'analyse complète</button></div>
       </div>
+      <div class="card card-pad" id="weekCard" hidden>
+        <h2>Ta semaine <span class="muted" id="weekRange"></span></h2>
+        <p class="recs-summary" id="weekSummary"></p>
+        <dl class="kv" id="weekKv"></dl>
+      </div>
     </div>
   </section>
 
@@ -702,6 +709,25 @@ tbody tr:last-child td { border-bottom: 0; }
         </div>
       </div>
 
+      <div class="group" id="alertCard">
+        <h3 class="group-title">Alertes sur le téléphone</h3>
+        <div class="card group-card">
+          <div class="setting">
+            <div class="txt"><b>Prévenir mon téléphone</b><span id="alertLine">CO2 trop élevé pendant 10 min, air humide pendant 3 h</span></div>
+            <label class="switch"><input type="checkbox" id="alertSwitch" aria-label="Alertes sur le téléphone"><span></span></label>
+          </div>
+          <div id="alertBody" hidden>
+            <p class="hint" style="padding:0 0 10px">Installe l'appli gratuite <b>ntfy</b> (Android ou iPhone), puis abonne-toi au sujet ci-dessous (bouton +). La station envoie elle-même les alertes, même appli fermée, tant qu'elle est sur le Wi-Fi de la maison.</p>
+            <dl class="kv" id="alertKv"></dl>
+            <div class="setting col">
+              <div class="txt"><b>Seuils</b><span>CO2 en ppm, humidité en %</span></div>
+              <div class="row"><input type="number" id="alertCo2In" min="600" max="5000" step="50" inputmode="numeric" aria-label="Seuil de CO2"><input type="number" id="alertRhIn" min="40" max="90" step="1" inputmode="numeric" aria-label="Seuil d'humidité"><button class="btn" id="btnAlertSave">Enregistrer</button></div>
+            </div>
+            <div class="group-actions"><a class="btn" id="btnAlertOpen" target="_blank" rel="noopener">S'abonner dans ntfy</a><button class="btn" id="btnAlertCopy">Copier le sujet</button><button class="btn" id="btnAlertTest">Envoyer un test</button></div>
+          </div>
+        </div>
+      </div>
+
       <div class="group" id="fwCard">
         <h3 class="group-title">Mise à jour</h3>
         <div class="card group-card">
@@ -817,7 +843,7 @@ tbody tr:last-child td { border-bottom: 0; }
         <h3 class="group-title">Stockage <span class="pill">Ingénieur</span></h3>
         <div class="card group-card">
           <dl class="kv" id="histKv"></dl>
-          <p class="hint">LittleFS : une moyenne par minute (24 o) pendant 30 jours, fichiers de 1440 minutes écrits en ajout seul, vidage toutes les 5 min.</p>
+          <p class="hint">LittleFS : une moyenne par minute (24 o) pendant 20 jours (30 jours avec un firmware antérieur à 0.10), fichiers de 1440 minutes écrits en ajout seul, vidage toutes les 5 min.</p>
           <div class="group-actions">
             <button class="btn" id="btnExport">Exporter l'affichage (CSV)</button>
             <button class="btn" id="btnImport">Importer un CSV</button>
@@ -850,8 +876,12 @@ tbody tr:last-child td { border-bottom: 0; }
         <h3 class="group-title">Avancé</h3>
         <div class="card group-card">
           <div class="setting">
-            <div class="txt"><b>Calibrer le capteur de CO2</b><span>Après 20 min dehors ou fenêtre grande ouverte</span></div>
+            <div class="txt"><b>Calibrer le capteur de CO2</b><span id="calLine">Pose la station dehors ou devant une fenêtre grande ouverte, puis appuie : elle se calibre seule dès que l'air est stable (20 min à 1 h)</span></div>
             <button class="btn" id="btnCal">Calibrer</button>
+          </div>
+          <div class="setting col">
+            <div class="txt"><b>Correction de température</b><span id="tOffLine">Degrés retirés à la mesure (la station chauffe un peu dans son boîtier). Compare avec un thermomètre posé à côté. L'humidité est corrigée en même temps.</span></div>
+            <div class="row"><input type="number" id="tOffIn" min="-10" max="10" step="0.1" inputmode="decimal" aria-label="Correction de température en degrés"><button class="btn" id="btnTOff">Enregistrer</button></div>
           </div>
           <div class="setting">
             <div class="txt"><b>Redémarrer la station</b><span>Réglages et mesures conservés</span></div>
@@ -1720,7 +1750,7 @@ async function cloudOff() {
 async function copyCloudLink() {
   const c = cloudCfg();
   if (!c) return;
-  const code = btoa(unescape(encodeURIComponent(JSON.stringify({ host: c.host, user: c.user, pass: c.pass }))));
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify({ host: c.host, user: c.user, pass: c.pass, station: c.station }))));
   const url = `${location.origin}${location.pathname}#acces=${encodeURIComponent(code)}`;
   try { await navigator.clipboard.writeText(url); showBanner("Lien copié. Il contient ton mot de passe : envoie-le seulement à toi-même."); }
   catch { prompt("Copie ce lien (il contient ton mot de passe) :", url); }
@@ -1731,7 +1761,9 @@ function importCloudLink() {
   if (!m) return;
   try {
     const c = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(m[1])))));
-    if (c.host && c.user && c.pass) saveCloudCfg({ host: cleanHost(c.host), user: String(c.user), pass: String(c.pass) });
+    // « station » : lien d'atelier (identifiants limités à sde/SDE-XXXX/, sans « + »)
+    const station = /^SDE-[0-9A-F]{4}$/.test(c.station || "") ? c.station : undefined;
+    if (c.host && c.user && c.pass) saveCloudCfg({ host: cleanHost(c.host), user: String(c.user), pass: String(c.pass), station });
   } catch {}
   history.replaceState(null, "", location.pathname + location.search);
 }
@@ -2809,10 +2841,83 @@ function renderDay() {
   host.setAttribute("aria-label", text || "Note de chaque heure");
 }
 
+// Version du firmware au moins égale à v (« 0.10.0 ») ; inconnue = non.
+function fwAtLeast(fw, v) {
+  const a = String(fw || "").split(".").map(Number), b = v.split(".").map(Number);
+  if (a.some(isNaN) || a.length < 2) return false;
+  for (let k = 0; k < 3; k++) if ((a[k] || 0) !== b[k]) return (a[k] || 0) > b[k];
+  return true;
+}
+
+// Réglages › Alertes sur le téléphone (firmware 0.10.0 et plus)
+function renderAlertCard(i, live) {
+  const al = i.alert;
+  $("alertCard").hidden = !al;
+  if (!al) return;
+  $("alertSwitch").checked = !!al.on;
+  $("alertSwitch").disabled = !live;
+  $("alertBody").hidden = !al.on;
+  $("alertLine").textContent = al.on ? `CO2 au-dessus de ${al.co2} ppm pendant 10 min, humidité au-dessus de ${al.rh} % pendant 3 h`
+    : "Coupées. CO2 trop élevé pendant 10 min, air humide pendant 3 h";
+  if (!al.on) return;
+  kv($("alertKv"), [["Sujet ntfy", al.topic || "–"], ["Serveur", al.server || "ntfy.sh"]]);
+  $("btnAlertOpen").href = `https://${al.server || "ntfy.sh"}/${al.topic || ""}`;
+  if (document.activeElement !== $("alertCo2In")) $("alertCo2In").value = al.co2 ?? 1200;
+  if (document.activeElement !== $("alertRhIn")) $("alertRhIn").value = al.rh ?? 60;
+  for (const el of [$("alertCo2In"), $("alertRhIn"), $("btnAlertSave"), $("btnAlertTest")]) el.disabled = !live;
+}
+
+// Réglages › Avancé : calibration guidée et correction de température
+function renderAdvanced(i, live) {
+  const cal = i.co2_cal;
+  $("btnCal").textContent = cal?.run ? "Annuler" : "Calibrer";
+  $("btnCal").disabled = !live;
+  $("calLine").textContent = cal?.run ? `En cours depuis ${fmtDur(cal.s || 0)} : la station attend que l'air soit stable (20 min au moins, 1 h au plus).`
+    : cal?.res === "ok" ? "Dernière calibration réussie. À refaire une ou deux fois par an."
+    : cal?.res === "high" ? "Dernière tentative abandonnée : l'air n'est pas descendu sous 550 ppm ou bougeait trop. Essaie dehors, loin des personnes."
+    : "Pose la station dehors ou devant une fenêtre grande ouverte, puis appuie : elle se calibre seule dès que l'air est stable (20 min à 1 h)";
+  const hasOff = i.t_offset != null;
+  $("tOffIn").closest(".setting").hidden = !hasOff;
+  if (hasOff && document.activeElement !== $("tOffIn")) $("tOffIn").value = i.t_offset;
+  for (const el of [$("tOffIn"), $("btnTOff")]) el.disabled = !live;
+}
+
+// Accueil : résumé des 7 derniers jours (moyennes de 10 min de la station).
+function renderWeek() {
+  const card = $("weekCard"), rows = weekRows;
+  const ok = rows && rows.length >= 6 * 24;   // au moins un jour de données
+  card.hidden = !ok || !source;
+  if (card.hidden) return;
+  const col = k => rows.map(r => r[k]).filter(v => v != null && !isNaN(v));
+  const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN;
+  const share = (a, f) => a.length ? a.filter(f).length / a.length : 0;
+  const co2 = col("co2"), pm = col("pm25"), rh = col("rh"), t = col("temp");
+  const hours = n => fmtMin(n * 10);
+  const co2Hi = co2.filter(v => v > 1000).length, rhHi = rh.filter(v => v > 60).length;
+  // Jours où la moyenne de PM2.5 dépasse 15 µg/m³ (ligne directrice de l'OMS sur 24 h)
+  const byDay = {};
+  for (const r of rows) if (r.pm25 != null) (byDay[new Date(r.t).toDateString()] ||= []).push(r.pm25);
+  const pmDays = Object.values(byDay).filter(a => avg(a) > 15).length;
+  const issues = [];
+  if (share(co2, v => v > 1000) > 0.15) issues.push("le CO2 a souvent dépassé 1000 ppm : aérer plus souvent");
+  if (share(rh, v => v > 60) > 0.2) issues.push("l'air a souvent été humide : risque de moisissure");
+  if (pmDays) issues.push(`${pmDays} jour${pmDays > 1 ? "s" : ""} avec trop de particules fines`);
+  $("weekSummary").textContent = issues.length ? `Cette semaine, ${issues.join(" ; ")}.` : "Bonne semaine : l'air est resté sain la plupart du temps.";
+  const first = rows[0].t, last = rows[rows.length - 1].t;
+  $("weekRange").textContent = `${new Date(first).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })} au ${new Date(last).toLocaleDateString("fr-CA", { day: "numeric", month: "short" })}`;
+  const items = [];
+  if (co2.length) items.push(["CO2", `moyenne ${fmt(avg(co2), 0)} ppm · ${hours(co2Hi)} au-dessus de 1000`]);
+  if (pm.length) items.push(["PM2.5", `${fmt(avg(pm), 1)} µg/m³ en moyenne · ${pmDays ? `${pmDays} j au-dessus de 15` : "aucun jour au-dessus de 15"}`]);
+  if (rh.length) items.push(["Humidité", `moyenne ${fmt(avg(rh), 0)} % · ${hours(rhHi)} au-dessus de 60 %`]);
+  if (t.length) items.push(["Température", `moyenne ${fmt(avg(t), 1)} °C`]);
+  kv($("weekKv"), items);
+}
+
 // Accueil : la première phrase du résumé, puis les problèmes (3 au plus) avec
 // leur premier geste. Les points positifs seulement s'il n'y a aucun problème.
 const firstSentence = s => (s.match(/^.*?[.!?](?=\s|$)/) || [s])[0];
 function renderHomeRecs(res) {
+  renderWeek();
   const card = $("homeRecs");
   card.hidden = !res || !source;
   if (card.hidden) return;
@@ -3575,6 +3680,8 @@ function renderDevice() {
     ...(led ? [["Bande LED", `${led.n ?? "?"} WS2812 sur GPIO ${led.pin ?? "?"}${led.pos != null ? ` · position ${fmt(led.pos, 1)}` : ""}`]] : []),
   ]);
   renderHistCard(i);
+  renderAlertCard(i, live);
+  renderAdvanced(i, live);
   renderFwCard(i);
   renderCloudCard();
   renderInstallCard();
@@ -3596,7 +3703,7 @@ function renderDevice() {
   const pmText = sensors.pm === false ? "Pas de réponse au dernier cycle : il n'est peut-être pas branché" : sensors.pm ? `Fonctionne · ${pmStateText().toLowerCase()}` : sensors.pmstate ? pmStateText() : "Inconnu";
   const envText = sensors.env ? `Fonctionne · adresse I2C ${sensors.envaddr ? hex(sensors.envaddr) : "?"}` : sensors.env === false ? `Non détecté${sensors.envdiag ? " : " + sensors.envdiag : ""}` : "Inconnu";
   for (const [nm, role, ok, txt] of [
-    ["MH-Z19B", "CO2 (infrarouge NDIR)", sensors.co2, co2Text + (sensors.co2 ? rangeText + abcText : "")],
+    [i.co2_model && i.co2_model !== "?" ? i.co2_model : "MH-Z19B", "CO2 (infrarouge NDIR)", sensors.co2, co2Text + (sensors.co2 && i.co2_model !== "MH-Z1911A" ? rangeText + abcText : "")],
     ["SDS011", "Particules fines PM2.5 / PM10", sensors.pm, pmText],
     ["BME680", "Température, humidité, pression, COV", sensors.env, envText],
   ]) {
@@ -3703,7 +3810,10 @@ function submitFirmware(e) {
   msg.style.color = "";
   if (!file) { fail("Choisis le fichier du firmware (.bin)."); return; }
   if (/merged/i.test(file.name)) { fail("Ce fichier « merged » sert au premier flash par USB. Pour la mise à jour par Wi-Fi, prends le fichier qui finit par « -ota.bin »."); return; }
-  if (file.size < 100e3 || file.size > 1310720) { fail(`Ce fichier ne ressemble pas à un firmware SDE (${Math.round(file.size / 1024)} ko).`); return; }
+  // Place pour le programme : donnée par le firmware 0.10+ (table V2 : 1,5 Mo), sinon table V1 (1,25 Mo).
+  const otaMax = lastInfo?.ota_max || 1310720;
+  if (file.size < 100e3 || file.size > 1572864) { fail(`Ce fichier ne ressemble pas à un firmware SDE (${Math.round(file.size / 1024)} ko).`); return; }
+  if (file.size > otaMax) { fail("Cette version est trop grosse pour la mémoire actuelle de la station : elle s'installe une seule fois par câble USB, avec le fichier « -merged.bin » (voir le guide). Les mises à jour suivantes repasseront par le Wi-Fi."); return; }
   if (!pass) { fail("Entre le mot de passe du Wi-Fi de la station."); return; }
   if (!confirm(`Installer ${file.name} sur la station ?\n\nElle redémarrera à la fin (environ 1 min). Ne la débranche pas pendant l'envoi.`)) return;
   const body = new FormData();
@@ -4242,8 +4352,48 @@ $("abcSwitch").onchange = async e => {
   await sendCmd(`co2.abc ${on ? "on" : "off"}`);
   setTimeout(refreshInfo, 2500);
 };
-$("btnCal").onclick = () => {
-  if (confirm("Calibrer le capteur de CO2 à 400 ppm ?\n\nLa station doit être dehors (ou fenêtre grande ouverte) depuis au moins 20 minutes. Sinon toutes les mesures seront décalées.")) sendCmd("co2.zero");
+$("btnCal").onclick = async () => {
+  const i = lastInfo || {};
+  if (i.co2_cal?.run) {
+    if (confirm("Annuler la calibration en cours ?")) { await sendCmd("co2.cal.stop"); setTimeout(refreshInfo, 1500); }
+    return;
+  }
+  if (!fwAtLeast(i.fw, "0.10.0")) {
+    if (confirm("Calibrer le capteur de CO2 à 400 ppm ?\n\nLa station doit être dehors (ou fenêtre grande ouverte) depuis au moins 20 minutes. Sinon toutes les mesures seront décalées.")) sendCmd("co2.zero");
+    return;
+  }
+  if (!confirm("Lancer la calibration du CO2 ?\n\nLa station doit être dehors (à l'abri de la pluie) ou devant une fenêtre grande ouverte, loin des personnes. Elle attend que l'air soit stable puis se calibre seule à 400 ppm, en 20 min à 1 h.")) return;
+  await sendCmd("co2.cal.auto");
+  setTimeout(refreshInfo, 1500);
+};
+$("btnTOff").onclick = async () => {
+  const v = Number(String($("tOffIn").value).replace(",", "."));
+  if (!isFinite(v) || v < -10 || v > 10) { showBanner("Correction entre -10 et 10 degrés."); return; }
+  await sendCmd(`temp.offset ${v.toFixed(1)}`);
+  setTimeout(refreshInfo, 1000);
+};
+$("alertSwitch").onchange = async e => {
+  if (e.target.checked) {
+    // Sujet difficile à deviner : quiconque le connaît reçoit les alertes.
+    const rnd = Array.from(crypto.getRandomValues(new Uint8Array(8)), b => b.toString(16).padStart(2, "0")).join("");
+    const st = (lastInfo?.wifi?.ap_ssid || "sde").toLowerCase();
+    await sendCmd(`alert.topic ${st}-${rnd}`);
+  } else {
+    await sendCmd("alert.off");
+  }
+  setTimeout(refreshInfo, 1000);
+};
+$("btnAlertSave").onclick = async () => {
+  const co2 = Math.round(+$("alertCo2In").value), rh = Math.round(+$("alertRhIn").value);
+  if (co2) await sendCmd(`alert.co2 ${co2}`);
+  if (rh) await sendCmd(`alert.rh ${rh}`);
+  setTimeout(refreshInfo, 1000);
+};
+$("btnAlertTest").onclick = () => sendCmd("alert.test");
+$("btnAlertCopy").onclick = async () => {
+  const t = lastInfo?.alert?.topic;
+  if (!t) return;
+  try { await navigator.clipboard.writeText(t); showBanner("Sujet copié : colle-le dans ntfy (bouton +)."); } catch { showBanner(`Sujet : ${t}`); }
 };
 for (const b of document.querySelectorAll("[data-cmd]")) b.onclick = () => sendCmd(b.dataset.cmd);
 $("btnRoom").onclick = () => saveRoom($("roomIn").value);

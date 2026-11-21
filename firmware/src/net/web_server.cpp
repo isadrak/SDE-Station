@@ -4,6 +4,7 @@
 #include <Update.h>
 #include <WebServer.h>
 #include <WiFi.h>
+#include <esp_ota_ops.h>
 #include <esp_task_wdt.h>
 
 #include "../app/watchdog.h"
@@ -432,6 +433,10 @@ void buildFullInfo(JsonDocument& doc) {
   buildInfo(doc);
   doc["up"] = millis() / 1000;
   doc["heap"] = ESP.getFreeHeap();
+  // Taille de la partition de mise à jour : 1 310 720 o en table V1,
+  // 1 572 864 o en table V2. L'appli refuse un fichier plus gros.
+  const esp_partition_t* next = esp_ota_get_next_update_partition(nullptr);
+  if (next) doc["ota_max"] = next->size;
   wifiStatus(doc["wifi"].to<JsonObject>());
   JsonObject h = doc["hist"].to<JsonObject>();
   h["flash"] = store->flashOk();
